@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Models;
+using Model;
+using Model.DomainModel;
 
 public static class IdentitySeeder
 {
@@ -28,7 +29,6 @@ public static class IdentitySeeder
             {
                 UserName = adminEmail,
                 Email = adminEmail,
-                Name = "System Administrator",
                 EmailConfirmed = true
             };
 
