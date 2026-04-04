@@ -6,10 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Models
+namespace Model.DomainModel
 {
     public class ApplicationUser : IdentityUser
     {
-        public string? Name { get; set; }
+        public EmployeeProfile? EmployeeProfile { get; set; }
+        public ClientProfile? ClientProfile { get; set; }
     }
 }

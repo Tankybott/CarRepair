@@ -1,4 +1,4 @@
-﻿using Models;
+﻿using Model.DomainModel;
 
 namespace DataAccess.Repository.IRepository
 {
