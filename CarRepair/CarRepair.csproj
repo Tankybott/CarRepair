@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <Folder Include="Areas\Identity\Data\" />
-    <Folder Include="Areas\Intranet\Controllers\" />
     <Folder Include="Areas\Intranet\Data\" />
     <Folder Include="Areas\Intranet\Models\" />
     <Folder Include="Areas\Portal\Data\" />

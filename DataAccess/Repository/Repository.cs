@@ -1,6 +1,6 @@
 ﻿using DataAccess.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
-
+using Model.DomainModel.intrefaces;
 using System.Linq.Expressions;
 
 namespace DataAccess.Repository
@@ -75,12 +75,34 @@ namespace DataAccess.Repository
 
         public void Remove(T entity)
         {
-            dbSet.Remove(entity);
+            if (entity is ISoftDeletable soft)
+            {
+                soft.DeletedAt = DateTime.UtcNow;
+                _db.Update(entity);
+            }
+            else
+            {
+                dbSet.Remove(entity);
+            }
         }
 
         public void RemoveRange(IEnumerable<T> entities)
         {
-            dbSet.RemoveRange(entities);
+            if (typeof(ISoftDeletable).IsAssignableFrom(typeof(T)))
+            {
+                foreach (var entity in entities)
+                {
+                    if (entity is ISoftDeletable soft)
+                    {
+                        soft.DeletedAt = DateTime.UtcNow;
+                        _db.Update(entity);
+                    }
+                }
+            }
+            else
+            {
+                dbSet.RemoveRange(entities);
+            }
         }
 
         public void Update(T entity)
