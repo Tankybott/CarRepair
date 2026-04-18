@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.23" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.23" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.23" />
@@ -21,14 +22,12 @@
 
   <ItemGroup>
     <Folder Include="Areas\Identity\Data\" />
-    <Folder Include="Areas\Intranet\Data\" />
-    <Folder Include="Areas\Intranet\Models\" />
-    <Folder Include="Areas\Portal\Data\" />
-    <Folder Include="Areas\Portal\Models\" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+    <ProjectReference Include="..\Model\Model.csproj" />
+    <ProjectReference Include="..\Service\Service.csproj" />
   </ItemGroup>
 
 </Project>

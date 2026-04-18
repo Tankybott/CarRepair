@@ -20,6 +20,7 @@ namespace Model.DomainModel
         public ICollection<Repair> Repairs { get; set; } = new List<Repair>();
 
         public string Description { get; set; } = string.Empty;
+        public string ShortDescription { get; set; } = string.Empty;
 
         public decimal AveragePrice { get; set; }
 

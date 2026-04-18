@@ -9,5 +9,6 @@ namespace Model.DomainModel.intrefaces
     public interface ISoftDeletable
     {
         public DateTime? DeletedAt { get; set; }
+        public int Id { get; set; }
     }
 }

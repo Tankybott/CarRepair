@@ -1,7 +1,10 @@
+using CarRepair.DI;
 using DataAccess;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Model.DomainModel;
+using Service.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +22,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddRazorPages();
+builder.Services.AddDI();
+builder.Services.AddAutoMapper(x => { }, typeof(GlobalMappingProfile).Assembly);
 
 var app = builder.Build();
 

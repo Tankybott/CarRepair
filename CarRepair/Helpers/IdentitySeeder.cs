@@ -9,7 +9,7 @@ public static class IdentitySeeder
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        string[] roles = { "Admin", "Employee", "Customer" };
+        string[] roles = { "Admin", "Manager", "Employee", "Customer" };
 
         foreach (var role in roles)
         {

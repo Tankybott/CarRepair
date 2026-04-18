@@ -26,52 +26,21 @@ namespace DataAccess.Repository
             dbSet.AddRange(entities);
         }
 
-        public async virtual Task<IEnumerable<T>> GetAllAsync(
-            Expression<Func<T, bool>>? filter = null,
-            string? includeProperties = null,
-            bool tracked = false,
-            Expression<Func<T, object>>? sortBy = null)
+        public async virtual Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, bool tracked = false, params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = tracked ? dbSet : dbSet.AsNoTracking();
-
-            if (filter != null)
-            {
-                query = query.Where(filter);
-            }
-
-            if (!string.IsNullOrEmpty(includeProperties))
-            {
-                foreach (var property in includeProperties.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    query = query.Include(property);
-                }
-            }
-
-            if (sortBy != null)
-            {
-                query = query.OrderBy(sortBy);
-            }
-
+            if (filter != null) query = query.Where(filter);
+            if (includes != null) foreach (var include in includes) query = query.Include(include);
             return await query.ToListAsync();
         }
 
-        public async virtual Task<T?> GetAsync(
-            Expression<Func<T, bool>> filter,
-            string? includeProperties = null,
-            bool tracked = false)
+        public async virtual Task<T?> GetAsync(Expression<Func<T, bool>> filter, bool tracked = false, params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = tracked ? dbSet : dbSet.AsNoTracking();
-
-            if (!string.IsNullOrEmpty(includeProperties))
-            {
-                foreach (var property in includeProperties.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    query = query.Include(property);
-                }
-            }
-
+            if (includes != null) foreach (var include in includes) query = query.Include(include);
             return await query.FirstOrDefaultAsync(filter);
         }
+
 
         public void Remove(T entity)
         {
@@ -118,6 +87,11 @@ namespace DataAccess.Repository
         public bool Any(Expression<Func<T, bool>> predicate)
         {
             return dbSet.Any(predicate);
+        }
+
+        public async Task SaveAsync()
+        {
+            await _db.SaveChangesAsync();
         }
     }
 }
