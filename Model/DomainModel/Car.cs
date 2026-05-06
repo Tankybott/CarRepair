@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic.FileIO;
+using Model.DomainModel.intrefaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Model.DomainModel
 {
-    public class Car
+    public class Car : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }
@@ -24,7 +25,6 @@ namespace Model.DomainModel
         public string Model { get; set; } = string.Empty;
         public string VIN { get; set; } = string.Empty;
         public string EngineCode { get; set; } = string.Empty;
-        public string EngineCapacity { get; set; } = string.Empty;
         public string? ClientNotes { get; set; }
 
         public int Year { get; set; }

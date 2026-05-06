@@ -28,7 +28,5 @@ namespace Service.ServiceTypeRelated
             var serviceTypes = await _serviceTypeRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<ServiceType>, IEnumerable<ServiceTypeDto>>(serviceTypes);
         }
-
-
     }
 }

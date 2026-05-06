@@ -1,0 +1,392 @@
+@model Model.ViewModel.IntranetRepairTasksViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = $"Tasks — Repair #{Model.RepairId}";
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<div class="container mt-4">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/Intranet/Repair/Manage/@Model.RepairId" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+        <div>
+            <h2 class="mb-0">Tasks — Repair #@Model.RepairId</h2>
+            <small class="text-muted">@Model.CarLabel &mdash; @Model.ClientFullName</small>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#taskModal" onclick="openAddModal()">
+            <i class="bi bi-plus-circle me-1"></i> Add Task
+        </button>
+    </div>
+
+    @if (!Model.Tasks.Any())
+    {
+        <div class="alert alert-info">No tasks yet. Add the first one above.</div>
+    }
+    else
+    {
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Description</th>
+                    <th>Predicted Start</th>
+                    <th>Predicted End</th>
+                    <th>Employees</th>
+                    <th>Status</th>
+                    <th class="text-center" style="width:180px">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tasksTableBody">
+                @foreach (var task in Model.Tasks)
+                {
+                    <tr id="task-row-@task.Id">
+                        <td>@task.Description</td>
+                        <td>@task.PredictedStart.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@task.PredictedEnd.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            @if (task.AssignedEmployeeNames.Any())
+                            {
+                                @string.Join(", ", task.AssignedEmployeeNames)
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td><span class="badge bg-secondary">@task.Status</span></td>
+                        <td class="text-center">
+                            @if (task.StatusValue == 0)
+                            {
+                                <button class="btn btn-sm btn-outline-primary me-1" title="Edit"
+                                        onclick='openEditModal(@Html.Raw(JsonSerializer.Serialize(task, jsonOptions)))'>
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning me-1" title="Cancel"
+                                        onclick="cancelTask(@task.Id)">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            }
+                            <button class="btn btn-sm btn-outline-danger" title="Delete"
+                                    onclick="deleteTask(@task.Id)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <hr class="my-4">
+
+    <div class="card">
+        <div class="card-header fw-semibold"><i class="bi bi-calendar-check me-2"></i>Schedule Repair</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Car Delivery Date &amp; Time <span class="text-danger">*</span></label>
+                    <input type="datetime-local" class="form-control" id="deliveryDateTime" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Car Pickup Date &amp; Time <span class="text-danger">*</span></label>
+                    <input type="datetime-local" class="form-control" id="pickupDateTime" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="button" class="btn btn-success w-100" onclick="scheduleRepair()">
+                        <i class="bi bi-check2-all me-1"></i> Schedule Repair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="taskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalTitle">Add Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editTaskId" value="0" />
+
+                <div class="mb-3">
+                    <label class="form-label">Service (for availability check)</label>
+                    <select class="form-select" id="taskServiceId" onchange="onServiceChange()">
+                        <option value="">-- Select Service --</option>
+                        @foreach (var svc in Model.Services)
+                        {
+                            <option value="@svc.Id" data-service-type-id="@svc.ServiceTypeId">
+                                @svc.ServiceName (@svc.ServiceType)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Predicted Start <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control" id="taskStart" oninput="clearEmployees()" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Predicted End <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control" id="taskEnd" oninput="clearEmployees()" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="checkAvailability()">
+                        <i class="bi bi-search me-1"></i> Check Availability
+                    </button>
+                </div>
+
+                <div class="mb-3" id="employeesSection" style="display:none;">
+                    <label class="form-label fw-semibold">Available Employees</label>
+                    <div id="availableEmployees" class="border rounded p-2" style="max-height:180px;overflow-y:auto;"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveTask()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const repairId = @Model.RepairId;
+    let selectedServiceTypeId = null;
+
+    const existingDelivery = @Html.Raw(Model.ExistingDelivery.HasValue
+        ? JsonSerializer.Serialize(Model.ExistingDelivery.Value, jsonOptions)
+        : "null");
+    const existingPickup = @Html.Raw(Model.ExistingPickup.HasValue
+        ? JsonSerializer.Serialize(Model.ExistingPickup.Value, jsonOptions)
+        : "null");
+    if (existingDelivery) document.getElementById('deliveryDateTime').value = toLocalInput(existingDelivery);
+    if (existingPickup) document.getElementById('pickupDateTime').value = toLocalInput(existingPickup);
+
+    const taskTimes = @Html.Raw(JsonSerializer.Serialize(
+        Model.Tasks
+            .Where(t => t.StatusValue != 2)
+            .Select(t => new { start = t.PredictedStart.ToString("yyyy-MM-ddTHH:mm"), end = t.PredictedEnd.ToString("yyyy-MM-ddTHH:mm") })
+            .ToList(), jsonOptions));
+
+    const takenServiceIds = new Set(@Html.Raw(JsonSerializer.Serialize(
+        Model.Tasks
+            .Where(t => t.StatusValue != 2 && t.ServiceId.HasValue)
+            .Select(t => t.ServiceId!.Value)
+            .ToList(), jsonOptions)));
+
+    function onServiceChange() {
+        const opt = document.getElementById('taskServiceId').selectedOptions[0];
+        selectedServiceTypeId = opt?.dataset.serviceTypeId || null;
+        clearEmployees();
+    }
+
+    function clearEmployees() {
+        document.getElementById('availableEmployees').innerHTML = '';
+        document.getElementById('employeesSection').style.display = 'none';
+    }
+
+    function checkAvailability() {
+        const start = document.getElementById('taskStart').value;
+        const end = document.getElementById('taskEnd').value;
+
+        if (!selectedServiceTypeId) {
+            toastr.warning('Select a service first.');
+            return;
+        }
+        if (!start || !end) {
+            toastr.warning('Fill in start and end times first.');
+            return;
+        }
+        if (start >= end) {
+            toastr.warning('End must be after start.');
+            return;
+        }
+
+        const excludeId = parseInt(document.getElementById('editTaskId').value) || null;
+        const excludeParam = excludeId ? `&excludeTaskId=${excludeId}` : '';
+
+        fetch(`/api/repair/available-employees?serviceTypeId=${selectedServiceTypeId}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}${excludeParam}`)
+            .then(r => r.json())
+            .then(employees => {
+                const div = document.getElementById('availableEmployees');
+                document.getElementById('employeesSection').style.display = '';
+                if (employees.length === 0) {
+                    div.innerHTML = '<p class="text-muted mb-0">No employees available in this time window.</p>';
+                } else {
+                    div.innerHTML = employees.map(e => `
+                        <div class="form-check">
+                            <input class="form-check-input emp-checkbox" type="checkbox" value="${e.id}" id="emp_${e.id}" />
+                            <label class="form-check-label" for="emp_${e.id}">${e.fullName} <span class="text-muted">(${e.employeeNumber})</span></label>
+                        </div>`).join('');
+                }
+            })
+            .catch(() => toastr.error('Failed to check availability.'));
+    }
+
+    function openAddModal() {
+        document.getElementById('taskModalTitle').textContent = 'Add Task';
+        document.getElementById('editTaskId').value = '0';
+        document.getElementById('taskStart').value = '';
+        document.getElementById('taskEnd').value = '';
+        document.getElementById('taskDescription').value = '';
+        selectedServiceTypeId = null;
+        clearEmployees();
+
+        const select = document.getElementById('taskServiceId');
+        select.removeAttribute('disabled');
+        select.value = '';
+        Array.from(select.options).forEach(opt => {
+            opt.disabled = opt.value !== '' && takenServiceIds.has(parseInt(opt.value));
+        });
+    }
+
+    function openEditModal(task) {
+        document.getElementById('taskModalTitle').textContent = 'Edit Task';
+        document.getElementById('editTaskId').value = task.id;
+        document.getElementById('taskStart').value = toLocalInput(task.predictedStart);
+        document.getElementById('taskEnd').value = toLocalInput(task.predictedEnd);
+        document.getElementById('taskDescription').value = task.description;
+
+        const select = document.getElementById('taskServiceId');
+        Array.from(select.options).forEach(opt => opt.disabled = false);
+        select.value = task.serviceId ?? '';
+        select.setAttribute('disabled', 'disabled');
+        const selected = select.selectedOptions[0];
+        selectedServiceTypeId = selected?.dataset.serviceTypeId || null;
+
+        clearEmployees();
+        new bootstrap.Modal(document.getElementById('taskModal')).show();
+    }
+
+    function toLocalInput(isoString) {
+        const d = new Date(isoString);
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+
+    function saveTask() {
+        const id = parseInt(document.getElementById('editTaskId').value);
+        const description = document.getElementById('taskDescription').value.trim();
+        const start = document.getElementById('taskStart').value;
+        const end = document.getElementById('taskEnd').value;
+        const assignedEmployeeIds = Array.from(document.querySelectorAll('.emp-checkbox:checked'))
+            .map(cb => parseInt(cb.value));
+
+        if (!description || !start || !end) {
+            toastr.error('Description, start and end are required.');
+            return;
+        }
+
+        const isEdit = id > 0;
+        const url = isEdit ? '/api/repair/task/update' : '/api/repair/task/create';
+        const serviceIdRaw = parseInt(document.getElementById('taskServiceId').value);
+        const serviceId = isNaN(serviceIdRaw) ? null : serviceIdRaw;
+        const dto = isEdit
+            ? { id, description, predictedStart: start, predictedEnd: end, assignedEmployeeIds }
+            : { repairId, serviceId, description, predictedStart: start, predictedEnd: end, assignedEmployeeIds };
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                toastr.success("Task saved");
+                bootstrap.Modal.getInstance(document.getElementById('taskModal'))?.hide();
+                setTimeout(() => location.reload(), 200);
+            } else {
+                toastr.error(res.error || 'Failed to save task.');
+            }
+        })
+        .catch(() => toastr.error('Request failed.'));
+    }
+
+    function cancelTask(id) {
+        if (!confirm('Cancel this task?')) return;
+        fetch(`/api/repair/task/cancel/${id}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) { toastr.success(res.message); setTimeout(() => location.reload(), 900); }
+                else toastr.error(res.error || 'Failed.');
+            })
+            .catch(() => toastr.error('Request failed.'));
+    }
+
+    function deleteTask(id) {
+        if (!confirm('Delete this task? This cannot be undone.')) return;
+        fetch(`/api/repair/task/delete/${id}`, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) { toastr.success(res.message); setTimeout(() => location.reload(), 900); }
+                else toastr.error(res.error || 'Failed.');
+            })
+            .catch(() => toastr.error('Request failed.'));
+    }
+
+    function scheduleRepair() {
+        const delivery = document.getElementById('deliveryDateTime').value;
+        const pickup = document.getElementById('pickupDateTime').value;
+
+        if (!delivery || !pickup) {
+            toastr.error('Fill in both delivery and pickup times.');
+            return;
+        }
+        if (delivery >= pickup) {
+            toastr.error('Pickup must be after delivery.');
+            return;
+        }
+
+        if (taskTimes.length > 0) {
+            const minStart = taskTimes.reduce((m, t) => t.start < m ? t.start : m, taskTimes[0].start);
+            const maxEnd   = taskTimes.reduce((m, t) => t.end   > m ? t.end   : m, taskTimes[0].end);
+            if (delivery >= minStart) {
+                toastr.error(`Car delivery must be before the earliest task start (${minStart.replace('T', ' ')}).`);
+                return;
+            }
+            if (pickup <= maxEnd) {
+                toastr.error(`Car pickup must be after the latest task end (${maxEnd.replace('T', ' ')}).`);
+                return;
+            }
+        }
+
+        if (!confirm('Schedule this repair? The status will advance to Scheduled.')) return;
+
+        const dto = {
+            repairId,
+            carDeliveryDateTime: delivery,
+            carPickupDateTime: pickup
+        };
+
+        fetch('/api/repair/schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                toastr.success(res.message);
+                setTimeout(() => window.location.href = `/Intranet/Repair/Manage/${repairId}`, 1200);
+            } else {
+                toastr.error(res.error || 'Failed to schedule.');
+            }
+        })
+        .catch(() => toastr.error('Request failed.'));
+    }
+</script>

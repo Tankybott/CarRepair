@@ -14,17 +14,13 @@ namespace DataAccess
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<ClientProfile> ClientProfiles { get; set; }
         public DbSet<EmployeeProfile> EmployeeProfiles { get; set; }
-        public DbSet<EmployeeScheduleDay> EmployeeScheduleDays { get; set; }
         public DbSet<EmployeeBooking> EmployeeBookings { get; set; }
         public DbSet<Car> Cars { get; set; }
         public DbSet<Repair> Repairs { get; set; }
         public DbSet<RepairBooking> RepairBookings { get; set; }
-        public DbSet<RepairImage> RepairImages { get; set; }
-        public DbSet<RepairComment> RepairComments { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<ServiceType> ServiceTypes { get; set; }
         public DbSet<WorkTask> Tasks { get; set; }
-        public DbSet<WorkTaskComment> WorkTaskComments { get; set; }
         public DbSet<Part> Parts { get; set; }
         public DbSet<CostEstimationItem> CostEstimationItems { get; set; }
 
@@ -51,7 +47,8 @@ namespace DataAccess
                 .HasOne(u => u.ClientProfile)
                 .WithOne(c => c.ApplicationUser)
                 .HasForeignKey<ClientProfile>(c => c.ApplicationUserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // ClientProfile <-> Car (1-many Req!)
             builder.Entity<Car>()
@@ -93,41 +90,19 @@ namespace DataAccess
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Repair <-> OverheadCosts (1-many)
-            builder.Entity<CostEstimationItem>()
-                .HasOne(c => c.OverheadRepair)
-                .WithMany(r => r.OverheadCosts)
-                .HasForeignKey(c => c.OverheadRepairId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             // WorkTask <-> EmployeeProfile (many-many)
             builder.Entity<WorkTask>()
                 .HasMany(t => t.EmployeesAssigned)
                 .WithMany(e => e.AssignedTasks);
 
-            // WorkTask <-> WorkTaskComment (1-many Req!)
-            builder.Entity<WorkTaskComment>()
-                .HasOne(ec => ec.WorkTask)
-                .WithMany(t => t.EmployeeComments)
-                .HasForeignKey(ec => ec.WorkTaskId)
-                .IsRequired()
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // EmployeeProfile <-> WorkTaskComment (1-many Req!)
-            builder.Entity<WorkTaskComment>()
-                .HasOne(ec => ec.EmployeeProfile)
+            // WorkTask <-> Service (optional many-to-one)
+            builder.Entity<WorkTask>()
+                .HasOne(t => t.Service)
                 .WithMany()
-                .HasForeignKey(ec => ec.EmployeeProfileId)
-                .IsRequired()
+                .HasForeignKey(t => t.ServiceId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // EmployeeProfile <-> EmployeeScheduleDay (1-many Req!)
-            builder.Entity<EmployeeScheduleDay>()
-                .HasOne(s => s.EmployeeProfile)
-                .WithMany(e => e.EmployeeScheduleDays)
-                .HasForeignKey(s => s.EmployeeProfileId)
-                .IsRequired()
-                .OnDelete(DeleteBehavior.Restrict);
 
             // EmployeeProfile <-> EmployeeBooking (1-many Req!)
             builder.Entity<EmployeeBooking>()
@@ -142,23 +117,6 @@ namespace DataAccess
                 .HasOne(b => b.Task)
                 .WithMany()
                 .HasForeignKey(b => b.TaskId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Repair <-> RepairImage (1-many Req!)
-            builder.Entity<RepairImage>()
-                .HasOne(i => i.Repair)
-                .WithMany(r => r.Images)
-                .HasForeignKey(i => i.RepairId)
-                .IsRequired()
-                .OnDelete(DeleteBehavior.Restrict);
-
-
-            // Repair <-> RepairComment (1-many Req!)
-            builder.Entity<RepairComment>()
-                .HasOne(c => c.Repair)
-                .WithMany(r => r.ManagerComments)
-                .HasForeignKey(c => c.RepairId)
-                .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Repair <-> Part (1-many Req!)

@@ -1,4 +1,4 @@
-﻿@model Model.ViewModel.IntranetClientViewModel
+@model Model.ViewModel.IntranetClientViewModel
 
 @{
     ViewData["Title"] = "Clients";
@@ -8,13 +8,79 @@
 <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
+<style>
+    .loading {
+        cursor: wait !important;
+    }
+</style>
+
 <div class="container mt-4 h-100">
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Clients</h2>
+
+        <button class="btn btn-primary" onclick="openAddModal()">
+            Add New
+        </button>
     </div>
 
     <div id="clientTable"></div>
+</div>
+
+<div class="modal fade" id="clientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="clientForm">
+
+                <input type="hidden" id="clientId" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add Client</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="credentialFields">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" type="email" id="clientEmail" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input class="form-control" type="password" id="clientPassword" minlength="6" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <input class="form-control" type="password" id="clientConfirmPassword" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" id="clientName" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Surname</label>
+                        <input class="form-control" id="clientSurname" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input class="form-control" id="clientPhoneNumber" required />
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -38,39 +104,147 @@
         responsiveLayout: "collapse",
 
         columns: [
-            {
-                title: "Name",
-                field: "fullName",
-                headerFilter: "input",
-                headerFilterPlaceholder: "Search..."
-            },
-
-            {
-                title: "Phone Number",
-                field: "phoneNumber",
-            },
-
+            { title: "Name", field: "fullName", headerFilter: "input", headerFilterPlaceholder: "Search..." },
+            { title: "Email", field: "email" },
+            { title: "Phone Number", field: "phoneNumber" },
             {
                 title: "Actions",
                 formatter: () => `
-                    <button class="btn btn-sm btn-warning edit-btn" title="Edit client">
+                    <button class="btn btn-sm btn-warning me-1 edit-btn" title="Edit">
                         <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-btn" title="Delete">
+                        <i class="bi bi-trash"></i>
                     </button>
                 `,
                 width: 120,
                 hozAlign: "center",
                 cellClick: (e, cell) => {
                     const data = cell.getRow().getData();
-
-                    if (e.target.closest(".edit-btn")) {
-                        editClient(data.id);
-                    }
+                    if (e.target.closest(".edit-btn")) openEditModal(data);
+                    if (e.target.closest(".delete-btn")) deleteRow(data.id, cell.getRow());
                 }
             }
         ]
     });
 
-    function editClient(id) {
-        console.log("Edit client:", id);
+    function setCredentialFieldsRequired(required) {
+        document.getElementById("clientEmail").required = required;
+        document.getElementById("clientPassword").required = required;
+        document.getElementById("clientConfirmPassword").required = required;
     }
+
+    function openAddModal() {
+        document.getElementById("modalTitle").innerText = "Add Client";
+        document.getElementById("clientId").value = "";
+        document.getElementById("clientEmail").value = "";
+        document.getElementById("clientPassword").value = "";
+        document.getElementById("clientConfirmPassword").value = "";
+        document.getElementById("clientName").value = "";
+        document.getElementById("clientSurname").value = "";
+        document.getElementById("clientPhoneNumber").value = "";
+        document.getElementById("credentialFields").style.display = "block";
+        setCredentialFieldsRequired(true);
+        new bootstrap.Modal(document.getElementById("clientModal")).show();
+    }
+
+    function openEditModal(data) {
+        document.getElementById("modalTitle").innerText = "Edit Client";
+        document.getElementById("clientId").value = data.id;
+        document.getElementById("clientName").value = data.name;
+        document.getElementById("clientSurname").value = data.surname;
+        document.getElementById("clientPhoneNumber").value = data.phoneNumber;
+        document.getElementById("credentialFields").style.display = "none";
+        setCredentialFieldsRequired(false);
+        new bootstrap.Modal(document.getElementById("clientModal")).show();
+    }
+
+    function deleteRow(id, row) {
+        if (!confirm("Are you sure you want to delete this client? It will remove all client's cars and repairs")) return;
+
+        document.body.classList.add("loading");
+
+        fetch(`/api/client/delete/${id}`, { method: "DELETE" })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    row.delete();
+                    toastr.success(res.message);
+                } else {
+                    toastr.error(res.error);
+                }
+            })
+            .finally(() => document.body.classList.remove("loading"));
+    }
+
+    document.getElementById("clientForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const id = document.getElementById("clientId").value;
+        const isAdd = !id;
+
+        const phone = document.getElementById("clientPhoneNumber").value;
+        const phoneRegex = /^[0-9+\-\s()]+$/;
+
+        if (!phoneRegex.test(phone)) {
+            toastr.error("Phone number contains invalid characters.");
+            return;
+        }
+
+        if (isAdd) {
+            const password = document.getElementById("clientPassword").value;
+            const confirmPassword = document.getElementById("clientConfirmPassword").value;
+
+            if (password !== confirmPassword) {
+                toastr.error("Passwords do not match.");
+                return;
+            }
+
+            if (password.length < 6) {
+                toastr.error("Password must be at least 6 characters long.");
+                return;
+            }
+        }
+
+        const url = isAdd ? "/api/client/create" : "/api/client/update";
+
+        const dto = isAdd
+            ? {
+                email: document.getElementById("clientEmail").value,
+                password: document.getElementById("clientPassword").value,
+                confirmPassword: document.getElementById("clientConfirmPassword").value,
+                name: document.getElementById("clientName").value,
+                surname: document.getElementById("clientSurname").value,
+                phoneNumber: phone
+            }
+            : {
+                id: parseInt(id),
+                name: document.getElementById("clientName").value,
+                surname: document.getElementById("clientSurname").value,
+                phoneNumber: phone
+            };
+
+        document.body.classList.add("loading");
+
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dto)
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    if (isAdd) {
+                        table.addData([res.data], true);
+                    } else {
+                        table.updateData([res.data]);
+                    }
+                    toastr.success(res.message);
+                    bootstrap.Modal.getInstance(document.getElementById("clientModal")).hide();
+                } else {
+                    toastr.error(res.error);
+                }
+            })
+            .finally(() => document.body.classList.remove("loading"));
+    });
 </script>

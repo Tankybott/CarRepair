@@ -1,0 +1,365 @@
+@model Model.ViewModel.IntranetEmployeeViewModel
+
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+<script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    .loading { cursor: wait !important; }
+</style>
+
+<div class="container mt-4 h-100">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Employees</h2>
+        <button class="btn btn-primary" onclick="openAddModal()">Add New</button>
+    </div>
+
+    <div id="employeeTable"></div>
+</div>
+
+<div class="modal fade" id="employeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="employeeForm">
+
+                <input type="hidden" id="employeeId" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="credentialFields">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" type="email" id="employeeEmail" />
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password</label>
+                                <input class="form-control" type="password" id="employeePassword" minlength="6" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirm Password</label>
+                                <input class="form-control" type="password" id="employeeConfirmPassword" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="passwordChangeFields" style="display:none;">
+                        <hr />
+                        <p class="text-muted small mb-2">Leave blank to keep the current password.</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">New Password</label>
+                                <input class="form-control" type="password" id="employeeNewPassword" minlength="6" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirm New Password</label>
+                                <input class="form-control" type="password" id="employeeConfirmNewPassword" />
+                            </div>
+                        </div>
+                        <hr />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" id="employeeName" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Surname</label>
+                            <input class="form-control" id="employeeSurname" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Employee Number</label>
+                            <input class="form-control" id="employeeNumber" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Specializations</label>
+                        <div class="border rounded p-3" style="max-height: 180px; overflow-y: auto;">
+                            @if (!Model.ServiceTypes.Any())
+                            {
+                                <span class="text-muted small">No service types available.</span>
+                            }
+                            @foreach (var st in Model.ServiceTypes)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input spec-checkbox" type="checkbox" value="@st.Id" id="spec_@st.Id" />
+                                    <label class="form-check-label" for="spec_@st.Id">@st.Name</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="employeeInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Employee Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Name</label>
+                        <p id="infoName" class="form-control-plaintext border-bottom"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Surname</label>
+                        <p id="infoSurname" class="form-control-plaintext border-bottom"></p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Email</label>
+                        <p id="infoEmail" class="form-control-plaintext border-bottom"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Employee Number</label>
+                        <p id="infoEmployeeNumber" class="form-control-plaintext border-bottom"></p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Specializations</label>
+                    <p id="infoSpecializations" class="form-control-plaintext border-bottom"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var tableData = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.Employees,
+            new System.Text.Json.JsonSerializerOptions {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+            }
+        )
+    );
+
+    var table = new Tabulator("#employeeTable", {
+        index: "id",
+        data: tableData,
+        layout: "fitColumns",
+        pagination: "local",
+        paginationSize: 10,
+        height: "90%",
+        movableColumns: true,
+        responsiveLayout: "collapse",
+
+        columns: [
+            { title: "Name", field: "fullName", headerFilter: "input" },
+            { title: "Employee #", field: "employeeNumber", headerFilter: "input", width: 140 },
+            {
+                title: "Specializations",
+                field: "specializationNames",
+                formatter: (cell) => cell.getValue().join(", ") || "—"
+            },
+            {
+                title: "Actions",
+                formatter: () => `
+                    <button class="btn btn-sm btn-info me-1 info-btn" title="Details">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                    <button class="btn btn-sm btn-secondary me-1 availability-btn" title="Show Availability">
+                        <i class="bi bi-calendar-week"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning me-1 edit-btn" title="Edit">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-btn" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `,
+                width: 190,
+                hozAlign: "center",
+                cellClick: (e, cell) => {
+                    const data = cell.getRow().getData();
+                    if (e.target.closest(".info-btn")) openInfoModal(data);
+                    if (e.target.closest(".availability-btn")) showAvailability(data.id);
+                    if (e.target.closest(".edit-btn")) openEditModal(data);
+                    if (e.target.closest(".delete-btn")) deleteRow(data.id, cell.getRow());
+                }
+            }
+        ]
+    });
+
+    function setCredentialFieldsRequired(required) {
+        document.getElementById("employeeEmail").required = required;
+        document.getElementById("employeePassword").required = required;
+        document.getElementById("employeeConfirmPassword").required = required;
+    }
+
+    function openAddModal() {
+        document.getElementById("modalTitle").innerText = "Add Employee";
+        document.getElementById("employeeId").value = "";
+        document.getElementById("employeeEmail").value = "";
+        document.getElementById("employeePassword").value = "";
+        document.getElementById("employeeConfirmPassword").value = "";
+        document.getElementById("employeeName").value = "";
+        document.getElementById("employeeSurname").value = "";
+        document.getElementById("employeeNumber").value = "";
+        document.getElementById("employeeNewPassword").value = "";
+        document.getElementById("employeeConfirmNewPassword").value = "";
+        document.querySelectorAll(".spec-checkbox").forEach(cb => cb.checked = false);
+        document.getElementById("credentialFields").style.display = "block";
+        document.getElementById("passwordChangeFields").style.display = "none";
+        setCredentialFieldsRequired(true);
+        new bootstrap.Modal(document.getElementById("employeeModal")).show();
+    }
+
+    function openEditModal(data) {
+        document.getElementById("modalTitle").innerText = "Edit Employee";
+        document.getElementById("employeeId").value = data.id;
+        document.getElementById("employeeName").value = data.name;
+        document.getElementById("employeeSurname").value = data.surname;
+        document.getElementById("employeeNumber").value = data.employeeNumber;
+        document.getElementById("employeeNewPassword").value = "";
+        document.getElementById("employeeConfirmNewPassword").value = "";
+        document.querySelectorAll(".spec-checkbox").forEach(cb => {
+            cb.checked = data.specializationIds.includes(parseInt(cb.value));
+        });
+        document.getElementById("credentialFields").style.display = "none";
+        document.getElementById("passwordChangeFields").style.display = "block";
+        setCredentialFieldsRequired(false);
+        new bootstrap.Modal(document.getElementById("employeeModal")).show();
+    }
+
+    function openInfoModal(data) {
+        document.getElementById("infoName").innerText = data.name;
+        document.getElementById("infoSurname").innerText = data.surname;
+        document.getElementById("infoEmail").innerText = data.email;
+        document.getElementById("infoEmployeeNumber").innerText = data.employeeNumber;
+        document.getElementById("infoSpecializations").innerText = data.specializationNames.join(", ") || "—";
+        new bootstrap.Modal(document.getElementById("employeeInfoModal")).show();
+    }
+
+    function showAvailability(id) {
+        // TODO: navigate to availability view
+    }
+
+    function deleteRow(id, row) {
+        if (!confirm("Are you sure you want to delete this employee?")) return;
+
+        document.body.classList.add("loading");
+
+        fetch(`/api/employee/delete/${id}`, { method: "DELETE" })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    row.delete();
+                    toastr.success(res.message);
+                } else {
+                    toastr.error(res.error);
+                }
+            })
+            .finally(() => document.body.classList.remove("loading"));
+    }
+
+    document.getElementById("employeeForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const id = document.getElementById("employeeId").value;
+        const isAdd = !id;
+
+        const specializationIds = Array.from(document.querySelectorAll(".spec-checkbox:checked"))
+            .map(cb => parseInt(cb.value));
+
+        if (isAdd) {
+            const password = document.getElementById("employeePassword").value;
+            const confirmPassword = document.getElementById("employeeConfirmPassword").value;
+
+            if (password !== confirmPassword) {
+                toastr.error("Passwords do not match.");
+                return;
+            }
+            if (password.length < 6) {
+                toastr.error("Password must be at least 6 characters long.");
+                return;
+            }
+        } else {
+            const newPassword = document.getElementById("employeeNewPassword").value;
+            const confirmNew = document.getElementById("employeeConfirmNewPassword").value;
+
+            if (newPassword && newPassword !== confirmNew) {
+                toastr.error("New passwords do not match.");
+                return;
+            }
+            if (newPassword && newPassword.length < 6) {
+                toastr.error("Password must be at least 6 characters long.");
+                return;
+            }
+        }
+
+        const url = isAdd ? "/api/employee/create" : "/api/employee/update";
+
+        const dto = isAdd
+            ? {
+                email: document.getElementById("employeeEmail").value,
+                password: document.getElementById("employeePassword").value,
+                confirmPassword: document.getElementById("employeeConfirmPassword").value,
+                name: document.getElementById("employeeName").value,
+                surname: document.getElementById("employeeSurname").value,
+                employeeNumber: document.getElementById("employeeNumber").value,
+                specializationIds
+            }
+            : {
+                id: parseInt(id),
+                name: document.getElementById("employeeName").value,
+                surname: document.getElementById("employeeSurname").value,
+                employeeNumber: document.getElementById("employeeNumber").value,
+                specializationIds,
+                newPassword: document.getElementById("employeeNewPassword").value || null,
+                confirmNewPassword: document.getElementById("employeeConfirmNewPassword").value || null
+            };
+
+        document.body.classList.add("loading");
+
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dto)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                if (isAdd) {
+                    table.addData([res.data], true);
+                } else {
+                    table.updateData([res.data]);
+                }
+                toastr.success(res.message);
+                bootstrap.Modal.getInstance(document.getElementById("employeeModal")).hide();
+            } else {
+                toastr.error(res.error);
+            }
+        })
+        .finally(() => document.body.classList.remove("loading"));
+    });
+</script>

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\ServiceTypeRelated\\\\ServiceTypeBase.cs\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\ServiceTypeRelated\\\\Interface\\\\IServiceTypeBase.cs\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\ServiceRelated\\\\ServiceBase.cs\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\ServiceRelated\\\\Interface\\\\IServiceBase.cs\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\PartRelated\\\\PartBase.cs\")",
+      "Bash(Find \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\ServiceRelated\" -name \"*Reader*\" -o -name \"*Service*\")",
+      "Bash(Find C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Model\\\\DTOs *)",
+      "Bash(Find C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Model\\\\ViewModel *)",
+      "Bash(Find C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\DataAccess\\\\Repository *)",
+      "Bash(Find C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service *)",
+      "Bash(Find C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\CarRepair\\\\Views *)",
+      "Bash(Find \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\CarRepair\\\\Views\" -type d)",
+      "Bash(Find \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\" -type f -name \"*Repair*\")",
+      "Bash(dotnet build *)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\RepairRelated\\\\WorkTaskCreator.cs\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\RepairRelated\\\\WorkTaskUpdater.cs\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\RepairRelated\\\\WorkTaskDeleter.cs\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\RepairRelated\\\\Interface\\\\IWorkTaskCreator.cs\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\RepairRelated\\\\Interface\\\\IWorkTaskUpdater.cs\")",
+      "PowerShell(Remove-Item *)"
+    ]
+  }
+}

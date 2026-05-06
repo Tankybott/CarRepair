@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Model.DomainModel.intrefaces;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Model.DomainModel
 {
-    public class CostEstimationItem
+    public class CostEstimationItem : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }
@@ -17,10 +18,6 @@ namespace Model.DomainModel
         public int RepairId { get; set; }
         public Repair Repair { get; set; }
 
-        [ForeignKey(nameof(OverheadRepair))]
-        public int? OverheadRepairId { get; set; }
-        public Repair? OverheadRepair { get; set; }
-
         public CostEstimationItemType Type { get; set; }
 
         public string Name { get; set; } = string.Empty;
@@ -28,7 +25,6 @@ namespace Model.DomainModel
 
         public decimal Cost { get; set; }
 
-        public DateTime? AddedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
     }
 

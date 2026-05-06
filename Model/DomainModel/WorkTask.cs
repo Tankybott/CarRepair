@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Model.DomainModel.intrefaces;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Model.DomainModel
 {
-    public class WorkTask
+    public class WorkTask : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }
@@ -17,9 +18,11 @@ namespace Model.DomainModel
         public int RepairId { get; set; }
         public Repair Repair { get; set; }
 
-        public ICollection<EmployeeProfile> EmployeesAssigned { get; set; } = new List<EmployeeProfile>();
-        public ICollection<WorkTaskComment> EmployeeComments { get; set; } = new List<WorkTaskComment>();
+        [ForeignKey(nameof(Service))]
+        public int? ServiceId { get; set; }
+        public Service? Service { get; set; }
 
+        public ICollection<EmployeeProfile> EmployeesAssigned { get; set; } = new List<EmployeeProfile>();
         public string Description { get; set; } = string.Empty;
         public string? FailDescription { get; set; }
 

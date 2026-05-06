@@ -26,21 +26,46 @@ namespace DataAccess.Repository
             dbSet.AddRange(entities);
         }
 
-        public async virtual Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, bool tracked = false, params Expression<Func<T, object>>[] includes)
+        public async virtual Task<IEnumerable<T>> GetAllAsync(
+            Expression<Func<T, bool>>? filter = null,
+            bool tracked = false,
+            params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = tracked ? dbSet : dbSet.AsNoTracking();
-            if (filter != null) query = query.Where(filter);
-            if (includes != null) foreach (var include in includes) query = query.Include(include);
+
+            if (typeof(ISoftDeletable).IsAssignableFrom(typeof(T)))
+            {
+                query = query.Where(e => ((ISoftDeletable)e).DeletedAt == null);
+            }
+
+            if (filter != null)
+                query = query.Where(filter);
+
+            if (includes != null)
+                foreach (var include in includes)
+                    query = query.Include(include);
+
             return await query.ToListAsync();
         }
 
-        public async virtual Task<T?> GetAsync(Expression<Func<T, bool>> filter, bool tracked = false, params Expression<Func<T, object>>[] includes)
+        public async virtual Task<T?> GetAsync(
+            Expression<Func<T, bool>> filter,
+            bool tracked = false,
+            params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = tracked ? dbSet : dbSet.AsNoTracking();
-            if (includes != null) foreach (var include in includes) query = query.Include(include);
+
+            if (typeof(ISoftDeletable).IsAssignableFrom(typeof(T)))
+            {
+                query = query.Where(e => ((ISoftDeletable)e).DeletedAt == null);
+            }
+
+            if (includes != null)
+                foreach (var include in includes)
+                    query = query.Include(include);
+
             return await query.FirstOrDefaultAsync(filter);
         }
-
 
         public void Remove(T entity)
         {

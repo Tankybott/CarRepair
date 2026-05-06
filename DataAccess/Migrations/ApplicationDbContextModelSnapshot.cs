@@ -274,10 +274,6 @@ namespace DataAccess.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("EngineCapacity")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("EngineCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -315,25 +311,28 @@ namespace DataAccess.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ApplicationUserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Surname")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[ApplicationUserId] IS NOT NULL");
 
                     b.ToTable("ClientProfiles");
                 });
@@ -345,9 +344,6 @@ namespace DataAccess.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("AddedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("Cost")
                         .HasColumnType("decimal(18,2)");
@@ -363,9 +359,6 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("OverheadRepairId")
-                        .HasColumnType("int");
-
                     b.Property<int>("RepairId")
                         .HasColumnType("int");
 
@@ -373,8 +366,6 @@ namespace DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OverheadRepairId");
 
                     b.HasIndex("RepairId");
 
@@ -428,6 +419,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("EmployeeNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -444,33 +438,6 @@ namespace DataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("EmployeeProfiles");
-                });
-
-            modelBuilder.Entity("Model.DomainModel.EmployeeScheduleDay", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EmployeeProfileId")
-                        .HasColumnType("int");
-
-                    b.Property<TimeOnly>("EndDateTime")
-                        .HasColumnType("time");
-
-                    b.Property<TimeOnly>("StartDateTime")
-                        .HasColumnType("time");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeProfileId");
-
-                    b.ToTable("EmployeeScheduleDays");
                 });
 
             modelBuilder.Entity("Model.DomainModel.Part", b =>
@@ -494,7 +461,6 @@ namespace DataAccess.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Manufacturer")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -532,9 +498,6 @@ namespace DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("BeingProcessedByManager")
-                        .HasColumnType("bit");
-
                     b.Property<int>("CarId")
                         .HasColumnType("int");
 
@@ -545,13 +508,13 @@ namespace DataAccess.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("FinalPrice")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime?>("FinishedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("PredictedPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Status")
@@ -592,56 +555,6 @@ namespace DataAccess.Migrations
                     b.ToTable("RepairBookings");
                 });
 
-            modelBuilder.Entity("Model.DomainModel.RepairComment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RepairId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RepairId");
-
-                    b.ToTable("RepairComments");
-                });
-
-            modelBuilder.Entity("Model.DomainModel.RepairImage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RepairId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RepairId");
-
-                    b.ToTable("RepairImages");
-                });
-
             modelBuilder.Entity("Model.DomainModel.Service", b =>
                 {
                     b.Property<int>("Id")
@@ -662,6 +575,10 @@ namespace DataAccess.Migrations
 
                     b.Property<int>("ServiceTypeId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ShortDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -727,6 +644,9 @@ namespace DataAccess.Migrations
                     b.Property<int>("RepairId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ServiceId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -734,40 +654,9 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("RepairId");
 
+                    b.HasIndex("ServiceId");
+
                     b.ToTable("Tasks");
-                });
-
-            modelBuilder.Entity("Model.DomainModel.WorkTaskComment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("EmployeeProfileId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("WorkTaskId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeProfileId");
-
-                    b.HasIndex("WorkTaskId");
-
-                    b.ToTable("WorkTaskComments");
                 });
 
             modelBuilder.Entity("RepairService", b =>
@@ -882,26 +771,18 @@ namespace DataAccess.Migrations
                     b.HasOne("Model.DomainModel.ApplicationUser", "ApplicationUser")
                         .WithOne("ClientProfile")
                         .HasForeignKey("Model.DomainModel.ClientProfile", "ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("ApplicationUser");
                 });
 
             modelBuilder.Entity("Model.DomainModel.CostEstimationItem", b =>
                 {
-                    b.HasOne("Model.DomainModel.Repair", "OverheadRepair")
-                        .WithMany("OverheadCosts")
-                        .HasForeignKey("OverheadRepairId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Model.DomainModel.Repair", "Repair")
                         .WithMany("CostEstimationCollection")
                         .HasForeignKey("RepairId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("OverheadRepair");
 
                     b.Navigation("Repair");
                 });
@@ -933,17 +814,6 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("ApplicationUser");
-                });
-
-            modelBuilder.Entity("Model.DomainModel.EmployeeScheduleDay", b =>
-                {
-                    b.HasOne("Model.DomainModel.EmployeeProfile", "EmployeeProfile")
-                        .WithMany("EmployeeScheduleDays")
-                        .HasForeignKey("EmployeeProfileId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("EmployeeProfile");
                 });
 
             modelBuilder.Entity("Model.DomainModel.Part", b =>
@@ -979,28 +849,6 @@ namespace DataAccess.Migrations
                     b.Navigation("Repair");
                 });
 
-            modelBuilder.Entity("Model.DomainModel.RepairComment", b =>
-                {
-                    b.HasOne("Model.DomainModel.Repair", "Repair")
-                        .WithMany("ManagerComments")
-                        .HasForeignKey("RepairId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Repair");
-                });
-
-            modelBuilder.Entity("Model.DomainModel.RepairImage", b =>
-                {
-                    b.HasOne("Model.DomainModel.Repair", "Repair")
-                        .WithMany("Images")
-                        .HasForeignKey("RepairId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Repair");
-                });
-
             modelBuilder.Entity("Model.DomainModel.Service", b =>
                 {
                     b.HasOne("Model.DomainModel.ServiceType", "ServiceType")
@@ -1020,26 +868,14 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Repair");
-                });
-
-            modelBuilder.Entity("Model.DomainModel.WorkTaskComment", b =>
-                {
-                    b.HasOne("Model.DomainModel.EmployeeProfile", "EmployeeProfile")
+                    b.HasOne("Model.DomainModel.Service", "Service")
                         .WithMany()
-                        .HasForeignKey("EmployeeProfileId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Model.DomainModel.WorkTask", "WorkTask")
-                        .WithMany("EmployeeComments")
-                        .HasForeignKey("WorkTaskId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Navigation("Repair");
 
-                    b.Navigation("EmployeeProfile");
-
-                    b.Navigation("WorkTask");
+                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("RepairService", b =>
@@ -1077,8 +913,6 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("Model.DomainModel.EmployeeProfile", b =>
                 {
                     b.Navigation("EmployeeBookings");
-
-                    b.Navigation("EmployeeScheduleDays");
                 });
 
             modelBuilder.Entity("Model.DomainModel.Repair", b =>
@@ -1088,12 +922,6 @@ namespace DataAccess.Migrations
 
                     b.Navigation("CostEstimationCollection");
 
-                    b.Navigation("Images");
-
-                    b.Navigation("ManagerComments");
-
-                    b.Navigation("OverheadCosts");
-
                     b.Navigation("PartsUsed");
 
                     b.Navigation("Tasks");
@@ -1102,11 +930,6 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("Model.DomainModel.ServiceType", b =>
                 {
                     b.Navigation("Services");
-                });
-
-            modelBuilder.Entity("Model.DomainModel.WorkTask", b =>
-                {
-                    b.Navigation("EmployeeComments");
                 });
 #pragma warning restore 612, 618
         }

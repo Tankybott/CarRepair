@@ -1,0 +1,276 @@
+@model Model.DTOs.IntranetDto.IntranetRepairManageDto
+
+@{
+    ViewData["Title"] = $"Repair #{Model.RepairId}";
+    bool isPending = Model.StatusValue == 0;
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<div class="container mt-4">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/Intranet/Repair" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>Okay
+        <h2 class="mb-0">Repair #@Model.RepairId</h2>
+        <span class="badge bg-secondary fs-6">@Model.Status</span>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-car-front me-2"></i>Vehicle</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5">Brand / Model</dt>
+                        <dd class="col-7">@Model.CarBrand @Model.CarModel</dd>
+
+                        <dt class="col-5">Year</dt>
+                        <dd class="col-7">@Model.CarYear</dd>
+
+                        <dt class="col-5">VIN</dt>
+                        <dd class="col-7"><code>@Model.CarVIN</code></dd>
+
+                        <dt class="col-5">Engine Code</dt>
+                        <dd class="col-7">@Model.CarEngineCode</dd>
+
+                        <dt class="col-5">Fuel Type</dt>
+                        <dd class="col-7">@Model.CarFuelType</dd>
+
+                        <dt class="col-5">Transmission</dt>
+                        <dd class="col-7">@Model.CarTransmission</dd>
+
+                        <dt class="col-5">Body Type</dt>
+                        <dd class="col-7">@Model.CarBodyType</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-person me-2"></i>Client</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5">Name</dt>
+                        <dd class="col-7">@Model.ClientFullName</dd>
+
+                        <dt class="col-5">Email</dt>
+                        <dd class="col-7">@(string.IsNullOrEmpty(Model.ClientEmail) ? "—" : Model.ClientEmail)</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-info-circle me-2"></i>Repair Details</span>
+                    @if (isPending && Model.AllAvailableServices.Any())
+                    {
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addServicesModal">
+                            <i class="bi bi-plus-circle me-1"></i> Add Services
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <span class="fw-semibold">Client Description:</span>
+                        <p class="mb-0 mt-1 text-muted">@(string.IsNullOrEmpty(Model.ClientDescription) ? "—" : Model.ClientDescription)</p>
+                    </div>
+                    <div>
+                        <span class="fw-semibold">Services:</span>
+                        @if (!Model.Services.Any())
+                        {
+                            <p class="text-muted mb-0">No services assigned.</p>
+                        }
+                        else
+                        {
+                            <ul class="list-unstyled mt-1 mb-0">
+                                @foreach (var svc in Model.Services)
+                                {
+                                    <li><i class="bi bi-check2 text-success me-1"></i>@svc.ServiceName <span class="text-muted small">(@svc.ServiceType)</span></li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.CostEstimations.Any())
+        {
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header fw-semibold"><i class="bi bi-receipt me-2"></i>Cost Estimation</div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th class="text-end">Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.CostEstimations)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td><span class="badge bg-light text-dark">@item.Type</span></td>
+                                        <td class="text-muted small">@item.Description</td>
+                                        <td class="text-end">€@item.Cost.ToString("F2")</td>
+                                    </tr>
+                                }
+                                <tr class="table-light fw-semibold">
+                                    <td colspan="3">Predicted Total</td>
+                                    <td class="text-end">€@Model.PredictedPrice.ToString("F2")</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.StatusValue < 2)
+                    {
+                        <div class="card-footer d-flex justify-content-end">
+                            <button type="button" class="btn btn-success btn-sm" onclick="acceptEstimation()">
+                                <i class="bi bi-check-circle me-1"></i> Accept Estimation
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.Parts.Any())
+        {
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header fw-semibold"><i class="bi bi-tools me-2"></i>Parts</div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Manufacturer</th>
+                                    <th>Serial</th>
+                                    <th>Qty</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var part in Model.Parts)
+                                {
+                                    <tr>
+                                        <td>@part.Name</td>
+                                        <td>@(part.Manufacturer ?? "—")</td>
+                                        <td><code>@part.SerialNumber</code></td>
+                                        <td>@part.Quantity</td>
+                                        <td class="text-end">€@part.UnitPrice.ToString("F2")</td>
+                                        <td><span class="badge bg-secondary">@part.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        @if (Model.StatusValue < 2)
+        {
+            <a href="/Intranet/Repair/EstimateCosts/@Model.RepairId" class="btn btn-primary">
+                <i class="bi bi-calculator me-1"></i> Estimate Costs
+            </a>
+        }
+        @if (Model.StatusValue >= 2)
+        {
+            <a href="/Intranet/Repair/Tasks/@Model.RepairId" class="btn btn-primary">
+                <i class="bi bi-list-task me-1"></i> Manage Tasks
+            </a>
+        }
+    </div>
+
+</div>
+
+@if (isPending && Model.AllAvailableServices.Any())
+{
+    <div class="modal fade" id="addServicesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Services</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                    @foreach (var svc in Model.AllAvailableServices)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input add-svc-checkbox" type="checkbox" value="@svc.Id" id="addSvc_@svc.Id" />
+                            <label class="form-check-label" for="addSvc_@svc.Id">
+                                @svc.ServiceName
+                                <span class="text-muted small ms-1">(@svc.ServiceType)</span>
+                            </label>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAddedServices()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    const repairId = @Model.RepairId;
+
+    function saveAddedServices() {
+        const serviceIds = Array.from(document.querySelectorAll('.add-svc-checkbox:checked'))
+            .map(cb => parseInt(cb.value));
+
+        if (serviceIds.length === 0) {
+            toastr.warning('Select at least one service.');
+            return;
+        }
+
+        fetch('/api/repair/add-services', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repairId, serviceIds })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                toastr.success(res.message);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                toastr.error(res.error || 'Failed to add services.');
+            }
+        })
+        .catch(() => toastr.error('Request failed.'));
+    }
+
+    function acceptEstimation() {
+        if (!confirm('Are you sure you want to accept this estimation?')) return;
+
+        fetch(`/api/repair/update-status/${repairId}/2`, { method: 'POST' })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    toastr.success('Estimation accepted.');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error(res.error || 'Failed to update status.');
+                }
+            })
+            .catch(() => toastr.error('Request failed.'));
+    }
+</script>

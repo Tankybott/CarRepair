@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Model.DomainModel.intrefaces;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Model.DomainModel
 {
-    public class Part
+    public class Part : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }
@@ -18,7 +19,7 @@ namespace Model.DomainModel
         public Repair Repair { get; set; }
 
         public string Name { get; set; } = string.Empty;
-        public string Manufacturer { get; set; } = string.Empty;
+        public string? Manufacturer { get; set; } = string.Empty;
         public string SerialNumber { get; set; } = string.Empty;
         public string? Description { get; set; }
 

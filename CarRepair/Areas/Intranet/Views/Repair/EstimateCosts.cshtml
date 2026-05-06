@@ -1,0 +1,237 @@
+@model Model.DTOs.IntranetDto.IntranetRepairManageDto
+@using System.Globalization
+
+@{
+    ViewData["Title"] = $"Estimate Costs — Repair #{Model.RepairId}";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<div class="container mt-4">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/Intranet/Repair/Manage/@Model.RepairId" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+        <div>
+            <h2 class="mb-0">Estimate Costs — Repair #@Model.RepairId</h2>
+            <small class="text-muted">@Model.CarBrand @Model.CarModel (@Model.CarYear) &mdash; @Model.ClientFullName</small>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header fw-semibold"><i class="bi bi-wrench me-2"></i>Services</div>
+        <div class="card-body">
+            @if (!Model.Services.Any())
+            {
+                <p class="text-muted mb-0">No services assigned to this repair.</p>
+            }
+            else
+            {
+                <div id="serviceCostsSection">
+                    @foreach (var svc in Model.Services)
+                    {
+                        <div class="row align-items-center mb-2 service-cost-row"
+                             data-service-id="@svc.Id"
+                             data-service-name="@svc.ServiceName">
+                            <div class="col-md-6">
+                                <span class="fw-semibold">@svc.ServiceName</span>
+                                <span class="text-muted small ms-1">(@svc.ServiceType)</span>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-text">€</span>
+                                    <input type="number" class="form-control service-cost-input"
+                                           value="@svc.AveragePrice.ToString("F2", CultureInfo.InvariantCulture)"
+                                           step="0.01" min="0" />
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-box-seam me-2"></i>Parts</span>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addPartBox()">
+                <i class="bi bi-plus-circle me-1"></i> Add Part
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="partsSection"></div>
+            <p id="partsEmpty" class="text-muted mb-0">No parts added yet.</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-plus-slash-minus me-2"></i>Other Costs</span>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addOtherCostBox()">
+                <i class="bi bi-plus-circle me-1"></i> Add Other Cost
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="otherCostsSection"></div>
+            <p id="otherEmpty" class="text-muted mb-0">No other costs added yet.</p>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-2">
+        <button type="button" class="btn btn-success" onclick="submitEstimate()">
+            <i class="bi bi-check-circle me-1"></i> Accept
+        </button>
+        <a href="/Intranet/Repair/Manage/@Model.RepairId" class="btn btn-secondary">Cancel</a>
+    </div>
+
+</div>
+
+<script>
+    const repairId = @Model.RepairId;
+    let partIndex = 0;
+    let otherIndex = 0;
+
+    function addPartBox() {
+        document.getElementById('partsEmpty').style.display = 'none';
+        const i = partIndex++;
+        const html = `
+            <div class="card border mb-3" id="part-box-${i}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBox('part-box-${i}', 'partsSection', 'partsEmpty')">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control part-name" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Manufacturer</label>
+                            <input type="text" class="form-control part-manufacturer" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Serial Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control part-serial" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control part-description" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Unit Price <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">€</span>
+                                <input type="number" class="form-control part-price" min="0" step="0.01" value="0" />
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Quantity <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control part-quantity" min="1" value="1" />
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('partsSection').insertAdjacentHTML('beforeend', html);
+    }
+
+    function addOtherCostBox() {
+        document.getElementById('otherEmpty').style.display = 'none';
+        const i = otherIndex++;
+        const html = `
+            <div class="card border mb-3" id="other-box-${i}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBox('other-box-${i}', 'otherCostsSection', 'otherEmpty')">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control other-name" />
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control other-description" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cost <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">€</span>
+                                <input type="number" class="form-control other-cost" min="0" step="0.01" value="0" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('otherCostsSection').insertAdjacentHTML('beforeend', html);
+    }
+
+    function removeBox(boxId, sectionId, emptyId) {
+        document.getElementById(boxId)?.remove();
+        if (document.getElementById(sectionId).children.length === 0) {
+            document.getElementById(emptyId).style.display = '';
+        }
+    }
+
+    function submitEstimate() {
+        const serviceCosts = Array.from(document.querySelectorAll('.service-cost-row')).map(row => ({
+            serviceId: parseInt(row.dataset.serviceId),
+            serviceName: row.dataset.serviceName,
+            cost: parseFloat(row.querySelector('.service-cost-input').value) || 0
+        }));
+
+        const partBoxes = Array.from(document.querySelectorAll('#partsSection .card'));
+        const parts = partBoxes.map(box => ({
+            name: box.querySelector('.part-name').value.trim(),
+            manufacturer: box.querySelector('.part-manufacturer').value.trim() || null,
+            serialNumber: box.querySelector('.part-serial').value.trim(),
+            description: box.querySelector('.part-description').value.trim() || null,
+            unitPrice: parseFloat(box.querySelector('.part-price').value) || 0,
+            quantity: parseInt(box.querySelector('.part-quantity').value) || 1
+        }));
+
+        for (const part of parts) {
+            if (!part.name || !part.serialNumber) {
+                toastr.error('Name and Serial Number are required for every part.');
+                return;
+            }
+        }
+
+        const otherBoxes = Array.from(document.querySelectorAll('#otherCostsSection .card'));
+        const otherCosts = otherBoxes.map(box => ({
+            name: box.querySelector('.other-name').value.trim(),
+            description: box.querySelector('.other-description').value.trim() || '',
+            cost: parseFloat(box.querySelector('.other-cost').value) || 0
+        }));
+
+        for (const other of otherCosts) {
+            if (!other.name) {
+                toastr.error('Name is required for every other cost entry.');
+                return;
+            }
+        }
+
+        const dto = { repairId, serviceCosts, parts, otherCosts };
+
+        fetch('/api/repair/estimate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                toastr.success(res.message);
+                setTimeout(() => window.location.href = `/Intranet/Repair/Manage/${repairId}`, 1200);
+            } else {
+                toastr.error(res.error || 'An error occurred.');
+            }
+        })
+        .catch(() => toastr.error('Request failed.'));
+    }
+</script>

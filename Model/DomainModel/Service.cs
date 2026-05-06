@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Model.DomainModel.intrefaces;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Model.DomainModel
 {
-    public class Service
+    public class Service : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }

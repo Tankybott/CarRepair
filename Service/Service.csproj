@@ -15,4 +15,10 @@
     <ProjectReference Include="..\Model\Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="CarRelated\" />
+    <Folder Include="WorkTaskRelated\" />
+    <Folder Include="ServiceRelated\" />
+  </ItemGroup>
+
 </Project>
