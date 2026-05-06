@@ -10,6 +10,6 @@ namespace Model.ViewModel
     public class IntranetServiceIndexVM
     {
         public IEnumerable<IntranetServiceReadDto> Items { get; set; } = Enumerable.Empty<IntranetServiceReadDto>();
-        public IEnumerable<string> ServiceTypes { get; set; } = Enumerable.Empty<string>();
+        public IEnumerable<ServiceTypeDto> ServiceTypes { get; set; } = Enumerable.Empty<ServiceTypeDto>();
     }
 }

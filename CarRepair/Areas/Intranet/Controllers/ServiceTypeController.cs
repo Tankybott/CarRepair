@@ -77,6 +77,19 @@ namespace CarRepair.Areas.Intranet.Controllers
             }
         }
 
-
+        [HttpDelete]
+        [Route("api/servicetype/delete/{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                await _serviceTypeBase.DeleteAsync(id);
+                return Ok(new { success = true, message = "Deleted successfully." });
+            }
+            catch
+            {
+                return StatusCode(500, new { success = false, error = "Delete failed." });
+            }
+        }
     }
 }

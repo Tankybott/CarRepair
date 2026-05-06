@@ -57,9 +57,17 @@ namespace Service.ServiceTypeRelated
 
 
 
-        public async Task DeleteAsync(ServiceType serviceType)
+        public async Task DeleteAsync(int id)
         {
-            _serviceTypeRepository.Remove(serviceType);
+            var entity = await _serviceTypeRepository.GetAsync(s => s.Id == id);
+
+            if (entity == null)
+            {
+                _logger.LogError($"ServiceType with id {id} not found for delete.");
+                throw new Exception($"ServiceType with id {id} not found.");
+            }
+
+            _serviceTypeRepository.Remove(entity);
             await _serviceTypeRepository.SaveAsync();
         }
     }

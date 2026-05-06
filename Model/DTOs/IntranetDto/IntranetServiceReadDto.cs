@@ -11,5 +11,8 @@ namespace Model.DTOs.IntranetDto
         public int Id { get; set; }
         public string ServiceName { get; set; } = string.Empty;
         public string ServiceType { get; set; } = string.Empty;
+        public int ServiceTypeId { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public decimal AveragePrice { get; set; }
     }
 }

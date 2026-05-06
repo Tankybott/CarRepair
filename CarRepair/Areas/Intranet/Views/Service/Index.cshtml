@@ -1,4 +1,4 @@
-﻿@model Model.ViewModel.IntranetServiceIndexVM
+@model Model.ViewModel.IntranetServiceIndexVM
 
 @{
     ViewData["Title"] = "Services";
@@ -7,6 +7,12 @@
 <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
 <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    .loading {
+        cursor: wait !important;
+    }
+</style>
 
 <div class="container mt-4 h-100">
 
@@ -23,16 +29,71 @@
             <label class="form-label">Filter by Service Type</label>
             <select id="serviceTypeFilter" class="form-select">
                 <option value="">All Types</option>
-
                 @foreach (var type in Model.ServiceTypes)
                 {
-                    <option value="@type">@type</option>
+                    <option value="@type.Name">@type.Name</option>
                 }
             </select>
         </div>
     </div>
 
     <div id="serviceTable"></div>
+</div>
+
+<div class="modal fade" id="addServiceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="serviceForm">
+
+                <input type="hidden" id="serviceId" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">Service Type</label>
+                        <select class="form-select" id="serviceServiceTypeId" required>
+                            <option value="">Select type...</option>
+                            @foreach (var type in Model.ServiceTypes)
+                            {
+                                <option value="@type.Id">@type.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Short Description</label>
+                        <input class="form-control" id="serviceShortDescription" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control"
+                                  id="serviceDescription"
+                                  minlength="2"
+                                  required
+                                  rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Average Price</label>
+                        <input class="form-control" type="number" step="0.01" min="0" id="serviceAveragePrice" required />
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -62,19 +123,16 @@
                 headerFilter: "input",
                 headerFilterPlaceholder: "Search..."
             },
-
             {
                 title: "Service Type",
                 field: "serviceType"
             },
-
             {
                 title: "Actions",
                 formatter: () => `
                     <button class="btn btn-sm btn-warning me-2 edit-btn" title="Edit">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-
                     <button class="btn btn-sm btn-danger delete-btn" title="Delete">
                         <i class="bi bi-trash"></i>
                     </button>
@@ -84,13 +142,8 @@
                 cellClick: (e, cell) => {
                     const data = cell.getRow().getData();
 
-                    if (e.target.closest(".edit-btn")) {
-                        editService(data.id);
-                    }
-
-                    if (e.target.closest(".delete-btn")) {
-                        deleteService(data.id);
-                    }
+                    if (e.target.closest(".edit-btn")) openEditModal(data);
+                    if (e.target.closest(".delete-btn")) deleteRow(data.id, cell.getRow());
                 }
             }
         ]
@@ -98,7 +151,6 @@
 
     document.getElementById("serviceTypeFilter").addEventListener("change", function () {
         const value = this.value;
-
         if (value === "") {
             table.clearFilter();
         } else {
@@ -107,14 +159,80 @@
     });
 
     function openAddModal() {
-        console.log("Open add modal");
+        document.getElementById("modalTitle").innerText = "Add Service";
+        document.getElementById("serviceId").value = "";
+        document.getElementById("serviceServiceTypeId").value = "";
+        document.getElementById("serviceShortDescription").value = "";
+        document.getElementById("serviceDescription").value = "";
+        document.getElementById("serviceAveragePrice").value = "";
+        new bootstrap.Modal(document.getElementById("addServiceModal")).show();
     }
 
-    function editService(id) {
-        console.log("Edit service:", id);
+    function openEditModal(data) {
+        document.getElementById("modalTitle").innerText = "Edit Service";
+        document.getElementById("serviceId").value = data.id;
+        document.getElementById("serviceServiceTypeId").value = data.serviceTypeId;
+        document.getElementById("serviceShortDescription").value = data.serviceName;
+        document.getElementById("serviceDescription").value = data.description;
+        document.getElementById("serviceAveragePrice").value = data.averagePrice;
+        new bootstrap.Modal(document.getElementById("addServiceModal")).show();
     }
 
-    function deleteService(id) {
-        console.log("Delete service:", id);
+    function deleteRow(id, row) {
+        if (!confirm("Are you sure you want to delete this service?")) return;
+
+        document.body.classList.add("loading");
+
+        fetch(`/api/service/delete/${id}`, { method: "DELETE" })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    row.delete();
+                    toastr.success(res.message);
+                } else {
+                    toastr.error(res.error);
+                }
+            })
+            .finally(() => document.body.classList.remove("loading"));
     }
+
+    document.getElementById("serviceForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const id = document.getElementById("serviceId").value;
+
+        const dto = {
+            id: id ? parseInt(id) : 0,
+            serviceTypeId: parseInt(document.getElementById("serviceServiceTypeId").value),
+            shortDescription: document.getElementById("serviceShortDescription").value,
+            description: document.getElementById("serviceDescription").value,
+            averagePrice: parseFloat(document.getElementById("serviceAveragePrice").value)
+        };
+
+        document.body.classList.add("loading");
+
+        fetch("/api/service/upsert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dto)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                const row = res.data;
+
+                if (dto.id === 0) {
+                    table.addData([row], true);
+                } else {
+                    table.updateData([row]);
+                }
+
+                toastr.success(res.message);
+                bootstrap.Modal.getInstance(document.getElementById("addServiceModal")).hide();
+            } else {
+                toastr.error(res.error);
+            }
+        })
+        .finally(() => document.body.classList.remove("loading"));
+    });
 </script>
