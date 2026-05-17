@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTOs.IntranetDto;
 using Model.ViewModel;
@@ -6,6 +7,7 @@ using Service.UserRelated.Interface;
 namespace CarRepair.Areas.Intranet.Controllers
 {
     [Area("Intranet")]
+    [Authorize(Roles = "Admin,Manager")]
     public class ClientController : Controller
     {
         private readonly IClientCreator _clientCreator;
@@ -35,6 +37,7 @@ namespace CarRepair.Areas.Intranet.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [Route("api/client/create")]
         public async Task<IActionResult> Create([FromBody] IntranetClientCreateDto dto)
         {
@@ -58,6 +61,7 @@ namespace CarRepair.Areas.Intranet.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [Route("api/client/update")]
         public async Task<IActionResult> Update([FromBody] IntranetClientUpdateDto dto)
         {
@@ -74,6 +78,7 @@ namespace CarRepair.Areas.Intranet.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Admin")]
         [Route("api/client/delete/{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {

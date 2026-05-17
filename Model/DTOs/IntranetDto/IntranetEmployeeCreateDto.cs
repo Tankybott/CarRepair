@@ -26,5 +26,9 @@ namespace Model.DTOs.IntranetDto
         public string EmployeeNumber { get; set; } = string.Empty;
 
         public List<int> SpecializationIds { get; set; } = new();
+
+        [Required]
+        [RegularExpression("^(Employee|Manager)$", ErrorMessage = "Role must be Employee or Manager.")]
+        public string Role { get; set; } = "Employee";
     }
 }

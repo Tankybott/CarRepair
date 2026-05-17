@@ -1,43 +1,105 @@
-﻿@using Model.ViewModel
+@using Model.ViewModel
 @model CartViewModel
 
-<h2 class="mb-4">Your Repair Cart</h2>
+@{
+    ViewData["Title"] = "Cart";
+}
+
+<h2 class="mb-4">Your Cart</h2>
 
 @if (!Model.Services.Any())
 {
-    <div class="alert alert-info">Your cart is empty.</div>
+    <div class="alert alert-info">
+        Your cart is empty. <a asp-area="Portal" asp-controller="Offer" asp-action="Index" class="alert-link">Browse our offer</a> to add services.
+    </div>
 }
 else
 {
-    <div class="list-group mb-4">
+    <div class="row g-4">
 
-        @foreach (var item in Model.Services)
-        {
-            <div class="list-group-item py-3">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Selected Services</h5>
 
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h5 class="mb-1">@item.ServiceName</h5>
-                        <p class="mb-1 text-muted">@item.ShortDescription</p>
+                    <div class="list-group list-group-flush">
+                        @foreach (var item in Model.Services)
+                        {
+                            <div class="list-group-item py-3 px-0 border-bottom">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">@item.ServiceName</h6>
+                                        <small class="text-muted">@item.ShortDescription</small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="fw-bold text-warning">@item.EstimatedPrice €</span>
+                                        <form asp-area="Portal" asp-controller="Home" asp-action="RemoveFromBasket" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="serviceId" value="@item.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
 
-                    <div class="text-end">
-                        <span class="fw-bold">@item.EstimatedPrice €</span>
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-2">
+                        <span class="fw-bold fs-5">Estimated Total:</span>
+                        <span class="fw-bold fs-5 text-warning">@Model.TotalEstimatedPrice €</span>
                     </div>
                 </div>
-
             </div>
-        }
-    </div>
+        </div>
 
-    <div class="d-flex justify-content-between align-items-center border-top pt-3">
-        <h4 class="mb-0">Estimated Total:</h4>
-        <h4 class="mb-0 text-warning">@Model.TotalEstimatedPrice €</h4>
-    </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Book a Repair</h5>
 
-    <div class="mt-4 text-end">
-        <a asp-action="Checkout" class="btn btn-warning btn-lg">
-            Proceed
-        </a>
+                    @if (!User.Identity!.IsAuthenticated)
+                    {
+                        <div class="alert alert-info small">
+                            Please <a asp-controller="Auth" asp-action="Login" class="alert-link">log in</a> to book a repair.
+                        </div>
+                    }
+                    else if (!Model.Cars.Any())
+                    {
+                        <div class="alert alert-warning small">
+                            You have no registered cars. <a asp-area="Portal" asp-controller="CarAndRepair" asp-action="Index" class="alert-link">Add a car first.</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <form asp-area="Portal" asp-controller="Home" asp-action="CreateRepair" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Select your car</label>
+                                <select name="carId" class="form-select" required>
+                                    <option value="" disabled selected>— choose a car —</option>
+                                    @foreach (var car in Model.Cars)
+                                    {
+                                        <option value="@car.Id">@car.Label</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Describe the issue</label>
+                                <textarea name="clientDescription" class="form-control" rows="4" placeholder="Describe what's wrong with your car…"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-warning w-100 fw-bold rounded-pill">
+                                <i class="bi bi-tools me-2"></i> Book Repair
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+
     </div>
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTOs.IntranetDto;
 using Model.ViewModel;
@@ -6,6 +7,7 @@ using Service.ServiceTypeRelated.Interface;
 namespace CarRepair.Areas.Intranet.Controllers
 {
     [Area("Intranet")]
+    [Authorize(Roles = "Admin,Manager")]
     public class ServiceTypeController : Controller
     {
         private readonly IServiceTypeCreator _serviceTypeCreator;
@@ -62,8 +64,15 @@ namespace CarRepair.Areas.Intranet.Controllers
         [Route("api/servicetype/delete/{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _serviceTypeDeleter.DeleteAsync(id);
-            return Ok(new { success = true, message = "Deleted successfully." });
+            try
+            {
+                await _serviceTypeDeleter.DeleteAsync(id);
+                return Ok(new { success = true, message = "Deleted successfully." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using CarRepair.Services;
 using DataAccess.Repository;
 using DataAccess.Repository.Interfaces;
 using Service.CarRelated;
@@ -33,6 +34,13 @@ namespace CarRepair.DI
             services.AddScoped<IEmployeeBookingRepository, EmployeeBookingRepository>();
             services.AddScoped<IRepairBookingRepository, RepairBookingRepository>();
 
+            // portal
+            services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IOfferReader, OfferReaderService>();
+            services.AddScoped<IPortalServiceReader, PortalServiceReaderService>();
+
+
+
             // service type
             services.AddScoped<IServiceTypeCreator, ServiceTypeCreator>();
             services.AddScoped<IServiceTypeUpdater, ServiceTypeUpdater>();
@@ -61,9 +69,12 @@ namespace CarRepair.DI
             // repair
             services.AddScoped<IRepairCreator, RepairCreator>();
             services.AddScoped<IRepairReader, RepairReadService>();
+            services.AddScoped<IRepairDeleter, RepairDeleter>();
             services.AddScoped<ICostEstimationCreator, CostEstimationCreator>();
             services.AddScoped<IRepairServiceAdder, RepairServiceAdder>();
             services.AddScoped<IRepairStatusUpdater, RepairStatusUpdater>();
+            services.AddScoped<IOverheadCostAdder, OverheadCostAdder>();
+            services.AddScoped<IOverheadCostDeleter, OverheadCostDeleter>();
             services.AddScoped<IWorkTaskCreator, WorkTaskCreator>();
             services.AddScoped<IWorkTaskUpdater, WorkTaskUpdater>();
             services.AddScoped<IWorkTaskDeleter, WorkTaskDeleter>();

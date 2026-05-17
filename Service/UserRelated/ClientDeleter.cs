@@ -1,6 +1,7 @@
 using DataAccess.Repository.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Model.DomainModel;
+using Service.CarRelated.Interface;
 using Service.UserRelated.Interface;
 
 namespace Service.UserRelated
@@ -10,26 +11,32 @@ namespace Service.UserRelated
         private readonly IClientProfileRepository _clientProfileRepo;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ICarRepository _carRepository;
+        private readonly ICarDeleter _carDeleter;
 
-        public ClientDeleter(IClientProfileRepository clientProfileRepo, UserManager<ApplicationUser> userManager, ICarRepository carRepository)
+        public ClientDeleter(
+            IClientProfileRepository clientProfileRepo,
+            UserManager<ApplicationUser> userManager,
+            ICarRepository carRepository,
+            ICarDeleter carDeleter)
         {
             _clientProfileRepo = clientProfileRepo;
             _userManager = userManager;
             _carRepository = carRepository;
+            _carDeleter = carDeleter;
         }
 
         public async Task DeleteAsync(int clientProfileId)
         {
-            var profile = await _clientProfileRepo.GetAsync(cp => cp.Id == clientProfileId, true, cp => cp.ApplicationUser);
+            var profile = await _clientProfileRepo.GetAsync(cp => cp.Id == clientProfileId, tracked: true, cp => cp.ApplicationUser);
 
             if (profile == null)
                 throw new Exception($"Client with id {clientProfileId} not found.");
 
-            var clientCars = await _carRepository.GetAllAsync(c => c.ClientId == profile.Id);
-            if (clientCars != null && clientCars.Any())
-                _carRepository.RemoveRange(clientCars);
+            var cars = await _carRepository.GetAllAsync(c => c.ClientId == profile.Id && c.DeletedAt == null);
+            foreach (var car in cars)
+                await _carDeleter.DeleteAsync(car.Id);
 
-            _clientProfileRepo.Remove(profile);
+            profile.DeletedAt = DateTime.UtcNow;
             await _clientProfileRepo.SaveAsync();
 
             var user = await _userManager.FindByIdAsync(profile.ApplicationUserId!);

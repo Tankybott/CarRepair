@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTOs.IntranetDto;
 using Model.ViewModel;
@@ -7,6 +8,7 @@ using Service.UserRelated.Interface;
 namespace CarRepair.Areas.Intranet.Controllers
 {
     [Area("Intranet")]
+    [Authorize(Roles = "Admin,Manager")]
     public class EmployeeController : Controller
     {
         private readonly IEmployeeCreator _employeeCreator;
@@ -45,6 +47,7 @@ namespace CarRepair.Areas.Intranet.Controllers
 
         [HttpPost]
         [Route("api/employee/create")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] IntranetEmployeeCreateDto dto)
         {
             if (!ModelState.IsValid)
@@ -68,6 +71,7 @@ namespace CarRepair.Areas.Intranet.Controllers
 
         [HttpPost]
         [Route("api/employee/update")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update([FromBody] IntranetEmployeeUpdateDto dto)
         {
             if (!ModelState.IsValid)
@@ -84,6 +88,7 @@ namespace CarRepair.Areas.Intranet.Controllers
 
         [HttpDelete]
         [Route("api/employee/delete/{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             await _employeeDeleter.DeleteAsync(id);

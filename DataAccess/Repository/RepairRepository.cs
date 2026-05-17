@@ -19,6 +19,17 @@ namespace DataAccess.Repository
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Repair>> GetAllForCarAndUserAsync(int carId, string userId)
+        {
+            return await _db.Repairs
+                .Where(r => r.CarId == carId && r.DeletedAt == null && r.Car.Client.ApplicationUserId == userId)
+                .Include(r => r.Car)
+                    .ThenInclude(c => c.Client)
+                .Include(r => r.ServicesSelected)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public async Task<Repair?> GetWithDetailsAsync(int id)
         {
             return await _db.Repairs

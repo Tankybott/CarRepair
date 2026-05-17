@@ -19,7 +19,7 @@ namespace Service.ServiceRelated
 
         public async Task<IEnumerable<IntranetServiceReadDto>> GetAllForIndex()
         {
-            var services = await _serviceRepository.GetAllAsync(null, false, s => s.ServiceType);
+            var services = await _serviceRepository.GetAllAsync(s => s.DeletedAt == null, false, s => s.ServiceType);
             return _mapper.Map<IEnumerable<Model.DomainModel.Service>, IEnumerable<IntranetServiceReadDto>>(services);
         }
     }

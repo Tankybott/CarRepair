@@ -14,12 +14,12 @@ namespace Service.PartRelated
 
         public async Task DeleteAsync(int id)
         {
-            var entity = await _partRepository.GetAsync(p => p.Id == id);
+            var entity = await _partRepository.GetAsync(p => p.Id == id, tracked: true);
 
             if (entity == null)
                 throw new Exception($"Part with id {id} not found.");
 
-            _partRepository.Remove(entity);
+            entity.DeletedAt = DateTime.UtcNow;
             await _partRepository.SaveAsync();
         }
     }

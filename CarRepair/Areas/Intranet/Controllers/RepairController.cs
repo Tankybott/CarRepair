@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
+using DataAccess.Repository.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Model.DomainModel;
 using Model.DTOs.IntranetDto;
@@ -11,6 +13,7 @@ using Service.WorkTaskRelated.Interface;
 namespace CarRepair.Areas.Intranet.Controllers
 {
     [Area("Intranet")]
+    [Authorize(Roles = "Admin,Manager,Employee")]
     public class RepairController : Controller
     {
         private readonly IRepairCreator _repairCreator;
@@ -25,9 +28,11 @@ namespace CarRepair.Areas.Intranet.Controllers
         private readonly IWorkTaskUpdater _workTaskUpdater;
         private readonly IWorkTaskDeleter _workTaskDeleter;
         private readonly IEmployeeAvailabilityGetter _employeeTimeBooker;
-        private readonly DataAccess.Repository.Interfaces.ICarRepository _carRepository;
-        private readonly DataAccess.Repository.Interfaces.IRepairRepository _repairRepository;
-        private readonly DataAccess.Repository.Interfaces.IWorkTaskRepository _workTaskRepository;
+        private readonly IOverheadCostAdder _overheadCostAdder;
+        private readonly IOverheadCostDeleter _overheadCostDeleter;
+        private readonly ICarRepository _carRepository;
+        private readonly IRepairRepository _repairRepository;
+        private readonly IWorkTaskRepository _workTaskRepository;
         private readonly IMapper _mapper;
 
         public RepairController(
@@ -43,9 +48,11 @@ namespace CarRepair.Areas.Intranet.Controllers
             IWorkTaskUpdater workTaskUpdater,
             IWorkTaskDeleter workTaskDeleter,
             IEmployeeAvailabilityGetter employeeTimeBooker,
-            DataAccess.Repository.Interfaces.ICarRepository carRepository,
-            DataAccess.Repository.Interfaces.IRepairRepository repairRepository,
-            DataAccess.Repository.Interfaces.IWorkTaskRepository workTaskRepository,
+            IOverheadCostAdder overheadCostAdder,
+            IOverheadCostDeleter overheadCostDeleter,
+            ICarRepository carRepository,
+            IRepairRepository repairRepository,
+            IWorkTaskRepository workTaskRepository,
             IMapper mapper)
         {
             _repairCreator = repairCreator;
@@ -60,6 +67,8 @@ namespace CarRepair.Areas.Intranet.Controllers
             _workTaskUpdater = workTaskUpdater;
             _workTaskDeleter = workTaskDeleter;
             _employeeTimeBooker = employeeTimeBooker;
+            _overheadCostAdder = overheadCostAdder;
+            _overheadCostDeleter = overheadCostDeleter;
             _carRepository = carRepository;
             _repairRepository = repairRepository;
             _workTaskRepository = workTaskRepository;
@@ -151,7 +160,6 @@ namespace CarRepair.Areas.Intranet.Controllers
             }
         }
 
-        // ── Repair index AJAX ──────────────────────────────────────────────
 
         [HttpGet]
         [Route("api/repair/cars-by-client/{clientId:int}")]
@@ -268,5 +276,50 @@ namespace CarRepair.Areas.Intranet.Controllers
                 return Ok(new { success = false, error = ex.Message });
             }
         }
+
+
+        public async Task<IActionResult> Overhead(int id)
+        {
+            try
+            {
+                var repair = await _repairRepository.GetForManageAsync(id);
+                if (repair == null) return NotFound();
+
+                return View(new IntranetRepairOverheadViewModel
+                {
+                    RepairId = id,
+                    CarLabel = $"{repair.Car.Brand} {repair.Car.Model} ({repair.Car.Year})",
+                    ClientFullName = (repair.Car.Client.Name + " " + repair.Car.Client.Surname).Trim(),
+                    OverheadCosts = _mapper.Map<List<IntranetCostEstimationItemReadDto>>(
+                        repair.CostEstimationCollection
+                            .Where(c => c.DeletedAt == null && c.Type == CostEstimationItemType.Overhead)
+                            .ToList())
+                });
+            }
+            catch
+            {
+                return RedirectToAction("Index", "Error", new { area = "Portal" });
+            }
+        }
+
+        [HttpPost]
+        [Route("api/repair/overhead/add-cost")]
+        public async Task<IActionResult> AddOverheadCost([FromBody] IntranetOverheadCostUpsertDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new { success = false, error = "Invalid data submitted." });
+
+            var saved = await _overheadCostAdder.AddAsync(dto);
+            return Ok(new { success = true, message = "Overhead cost added.", data = saved });
+        }
+
+        [HttpDelete]
+        [Route("api/repair/overhead/cost/{id:int}")]
+        public async Task<IActionResult> DeleteOverheadCost(int id)
+        {
+            await _overheadCostDeleter.DeleteAsync(id);
+            return Ok(new { success = true, message = "Overhead cost removed." });
+        }
+
     }
 }

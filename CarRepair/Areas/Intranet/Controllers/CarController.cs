@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTOs.IntranetDto;
 using Model.ViewModel;
@@ -7,6 +8,7 @@ using Service.UserRelated.Interface;
 namespace CarRepair.Areas.Intranet.Controllers
 {
     [Area("Intranet")]
+    [Authorize(Roles = "Admin,Manager")]
     public class CarController : Controller
     {
         private readonly ICarCreator _carCreator;

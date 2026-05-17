@@ -26,6 +26,20 @@ builder.Services.AddRazorPages();
 builder.Services.AddDI();
 builder.Services.AddAutoMapper(x => { }, typeof(GlobalMappingProfile).Assembly);
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Portal/Auth/Login";
+    options.AccessDeniedPath = "/Portal/Home/Index";
+});
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -50,8 +64,11 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseSession();
+
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();

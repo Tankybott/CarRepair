@@ -1,11 +1,8 @@
 ﻿using AutoMapper;
 using Model.DomainModel;
 using Model.DTOs.IntranetDto;
-using System;
-using System.Collections.Generic;
+using Model.DTOs.PortalDto;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Service.Mapping
 {
@@ -14,6 +11,29 @@ namespace Service.Mapping
         public GlobalMappingProfile()
         {
             CreateMap<ServiceType, ServiceTypeDto>().ReverseMap();
+
+            CreateMap<ServiceType, OfferServiceTypeDto>()
+                .ForMember(d => d.Services, opt => opt.MapFrom(s => s.Services.Where(sv => sv.DeletedAt == null)));
+
+            CreateMap<Model.DomainModel.Service, OfferServiceDto>()
+                .ForMember(d => d.ShortDescription, opt => opt.MapFrom(s => s.ShortDescription))
+                .ForMember(d => d.EstimatedPrice, opt => opt.MapFrom(s => s.AveragePrice));
+
+            CreateMap<Model.DomainModel.Service, CartServiceDto>()
+                .ForMember(d => d.ServiceName, opt => opt.MapFrom(s => s.ShortDescription))
+                .ForMember(d => d.EstimatedPrice, opt => opt.MapFrom(s => s.AveragePrice));
+
+            CreateMap<Car, PortalCarDto>()
+                .ForMember(d => d.Label, opt => opt.MapFrom(s => $"{s.Brand} {s.Model} ({s.Year})"));
+
+            CreateMap<Car, CarAndRepairCarDto>()
+                .ForMember(d => d.ClientId, opt => opt.MapFrom(s => s.ClientId))
+                .ForMember(d => d.FuelType, opt => opt.MapFrom(s => s.FuelType.ToString()))
+                .ForMember(d => d.FuelTypeValue, opt => opt.MapFrom(s => (int)s.FuelType))
+                .ForMember(d => d.Transmission, opt => opt.MapFrom(s => s.Transmission.ToString()))
+                .ForMember(d => d.TransmissionValue, opt => opt.MapFrom(s => (int)s.Transmission))
+                .ForMember(d => d.BodyType, opt => opt.MapFrom(s => s.BodyType.ToString()))
+                .ForMember(d => d.BodyTypeValue, opt => opt.MapFrom(s => (int)s.BodyType));
 
             CreateMap<Model.DomainModel.Service, IntranetServiceReadDto>()
                 .ForMember(d => d.ServiceName, opt => opt.MapFrom(s => s.ShortDescription))
@@ -86,9 +106,12 @@ namespace Service.Mapping
                 .ForMember(d => d.ClientSurname, opt => opt.MapFrom(s => s.Car.Client.Surname))
                 .ForMember(d => d.ClientFullName, opt => opt.MapFrom(s => s.Car.Client.Name + " " + s.Car.Client.Surname))
                 .ForMember(d => d.ClientEmail, opt => opt.MapFrom(s => s.Car.Client.ApplicationUser != null ? s.Car.Client.ApplicationUser.Email : string.Empty))
+                .ForMember(d => d.BookingStart, opt => opt.MapFrom(s => s.Booking != null ? (DateTime?)s.Booking.StartDateTime : null))
+                .ForMember(d => d.BookingEnd, opt => opt.MapFrom(s => s.Booking != null ? (DateTime?)s.Booking.EndDateTime : null))
                 .ForMember(d => d.Services, opt => opt.MapFrom(s => s.ServicesSelected))
                 .ForMember(d => d.Parts, opt => opt.MapFrom(s => s.PartsUsed.Where(p => p.DeletedAt == null).ToList()))
-                .ForMember(d => d.CostEstimations, opt => opt.MapFrom(s => s.CostEstimationCollection.Where(c => c.DeletedAt == null).ToList()));
+                .ForMember(d => d.CostEstimations, opt => opt.MapFrom(s => s.CostEstimationCollection.Where(c => c.DeletedAt == null && c.Type != CostEstimationItemType.Overhead).ToList()))
+                .ForMember(d => d.OverheadCosts, opt => opt.MapFrom(s => s.CostEstimationCollection.Where(c => c.DeletedAt == null && c.Type == CostEstimationItemType.Overhead).ToList()));
         }
     }
 }

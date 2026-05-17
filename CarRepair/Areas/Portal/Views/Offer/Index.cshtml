@@ -1,8 +1,23 @@
-﻿@using Model.ViewModel
+@using Model.ViewModel
 @model OfferViewModel
 
 @{
     ViewData["Title"] = "Offer";
+    var added = TempData["Added"] as string;
+}
+
+@if (added is not null)
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+        <div id="addedToast" class="toast align-items-center text-bg-success border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-cart-check me-2"></i> <strong>@added</strong> added to cart.
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
 }
 
 <div class="container py-4" style="max-width: 1600px;">
@@ -18,25 +33,39 @@
                 @foreach (var item in category.Services)
                 {
                     <div class="col-12 col-md-6 col-lg-4">
+                        <form asp-area="Portal" asp-controller="Offer" asp-action="AddToBasket" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit"
+                                    class="card h-100 border-0 shadow-sm rounded-4 p-4 bg-body-secondary w-100 text-start"
+                                    style="cursor: pointer; transition: transform .15s ease, box-shadow .15s ease;"
+                                    onmouseover="this.style.transform='translateY(-3px)'; this.classList.add('shadow');"
+                                    onmouseout="this.style.transform='translateY(0)'; this.classList.remove('shadow');">
 
-                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 bg-body-secondary transition"
-                             style="cursor: pointer; transition: transform .15s ease, box-shadow .15s ease;"
-                             onmouseover="this.style.transform='translateY(-3px)'; this.classList.add('shadow');"
-                             onmouseout="this.style.transform='translateY(0)'; this.classList.remove('shadow');">
+                                <h5 class="fw-bold">@item.ShortDescription</h5>
+                                <p class="text-muted mb-2">@item.Description</p>
 
-                            <h5 class="fw-bold">@item.ShortDescription</h5>
-                            <p class="text-muted mb-2">@item.Description</p>
-
-                            <div class="fw-bold text-warning">
-                                @item.EstimatedPrice €
-                            </div>
-
-                        </div>
-
+                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <span class="fw-bold text-warning">@item.EstimatedPrice €</span>
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-cart-plus"></i> Add
+                                    </span>
+                                </div>
+                            </button>
+                        </form>
                     </div>
                 }
 
             </div>
         </div>
     }
+
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.toast').forEach(el => {
+            setTimeout(() => bootstrap.Toast.getOrCreateInstance(el).hide(), 3000);
+        });
+    </script>
+}

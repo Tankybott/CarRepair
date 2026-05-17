@@ -15,7 +15,7 @@ namespace Model.DTOs.IntranetDto
         public string Name { get; set; } = string.Empty;
 
         [Required]
-        [MinLength(2, ErrorMessage = "Description must be at least 2 characters long.")]
+        [MinLength(30, ErrorMessage = "Description must be at least 30 characters long.")]
         public string Description { get; set; } = string.Empty;
     }
 }

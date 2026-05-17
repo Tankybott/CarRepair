@@ -1,64 +1,224 @@
-﻿@using Model.ViewModel
+@using Model.ViewModel
+@using Model.DomainModel
 @model CarAndRepairViewModel
 
 @{
     ViewData["Title"] = "Your Cars & Repairs";
 }
 
-<div class="container py-4" style="max-width: 1400px;">
+<div class="py-2" style="max-width: 1400px;">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold">Your Cars</h2>
-
-        <a asp-controller="CarAndRepair" asp-action="Add"
-           class="btn btn-warning fw-bold">
+        <button class="btn btn-warning fw-bold rounded-pill px-4" onclick="openAddModal()">
             + Add Car
-        </a>
+        </button>
     </div>
 
-    <div class="row g-3">
+    @if (!Model.Cars.Any())
+    {
+        <div class="alert alert-info">You have no cars registered yet. Add your first car above.</div>
+    }
+
+    <div class="row g-3" id="carCards">
 
         @foreach (var car in Model.Cars)
         {
-        <div class="col-12 col-md-6 col-lg-4">
+            <div class="col-12 col-md-6 col-lg-4" id="card-@car.Id">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 bg-body-secondary">
 
-            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 bg-body-secondary">
+                    <h4 class="fw-bold mb-1">@car.Brand @car.Model</h4>
+                    <div class="text-muted small mb-1"><strong>VIN:</strong> @car.VIN</div>
+                    <div class="text-muted small mb-1"><strong>Year:</strong> @car.Year</div>
+                    <div class="text-muted small mb-3"><strong>Fuel:</strong> @car.FuelType &nbsp;|&nbsp; <strong>Transmission:</strong> @car.Transmission</div>
 
-                <h4 class="fw-bold mb-1">@car.Brand @car.Model</h4>
-
-                <div class="text-muted mb-1">
-                    <strong>VIN:</strong> @car.VIN
+                    <div class="d-flex gap-2 mt-auto">
+                        <a asp-area="Portal" asp-controller="Repairs" asp-action="Index" asp-route-carId="@car.Id"
+                           class="btn btn-dark rounded-pill fw-bold flex-fill">
+                            Show Repairs
+                        </a>
+                        <button class="btn btn-outline-secondary rounded-pill" title="Edit"
+                                onclick="openEditModal(@System.Text.Json.JsonSerializer.Serialize(car))">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn btn-outline-danger rounded-pill" title="Delete"
+                                onclick="deleteCar(@car.Id)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
                 </div>
-
-                <div class="text-muted mb-3">
-                    <strong>Year:</strong> @car.Year
-                </div>
-
-                <div class="d-flex gap-2">
-
-                    <a asp-controller="Repairs" asp-action="Index" asp-route-carId="@car.Id"
-                       class="btn btn-dark w-50 fw-bold"
-                       style="transition: transform .15s ease, box-shadow .15s ease;"
-                       onmouseover="this.style.transform='translateY(-2px)'; this.classList.add('shadow');"
-                       onmouseout="this.style.transform='translateY(0)'; this.classList.remove('shadow');">
-                        Show Repairs
-                    </a>
-
-                    <a asp-controller="CarAndRepair" asp-action="Edit" asp-route-id="@car.Id"
-                       class="btn btn-outline-dark w-50 fw-bold"
-                       style="transition: transform .15s ease, box-shadow .15s ease;"
-                       onmouseover="this.style.transform='translateY(-2px)'; this.classList.add('shadow');"
-                       onmouseout="this.style.transform='translateY(0)'; this.classList.remove('shadow');">
-                        Edit Info
-                    </a>
-
-                </div>
-
             </div>
-
-        </div>
         }
 
     </div>
-
 </div>
+
+<div class="modal fade" id="carModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Add Car</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <input type="hidden" id="carId" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Brand</label>
+                        <input class="form-control" id="carBrand" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Model</label>
+                        <input class="form-control" id="carModel" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">VIN</label>
+                        <input class="form-control" id="carVIN" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Year</label>
+                        <input class="form-control" type="number" min="1886" max="2100" id="carYear" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Engine Code</label>
+                        <input class="form-control" id="carEngineCode" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Fuel Type</label>
+                        <select class="form-select" id="carFuelType">
+                            @foreach (var val in Enum.GetValues<FuelType>())
+                            {
+                                <option value="@((int)val)">@val.ToString()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Transmission</label>
+                        <select class="form-select" id="carTransmission">
+                            @foreach (var val in Enum.GetValues<TransmissionType>())
+                            {
+                                <option value="@((int)val)">@val.ToString()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Body Type</label>
+                        <select class="form-select" id="carBodyType">
+                            @foreach (var val in Enum.GetValues<BodyType>())
+                            {
+                                <option value="@((int)val)">@val.ToString()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                        <textarea class="form-control" id="carNotes" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div id="modalError" class="alert alert-danger mt-3 d-none"></div>
+
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4" onclick="submitCar()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+
+    function openAddModal() {
+        document.getElementById("modalTitle").innerText = "Add Car";
+        document.getElementById("carId").value = "";
+        document.getElementById("carBrand").value = "";
+        document.getElementById("carModel").value = "";
+        document.getElementById("carVIN").value = "";
+        document.getElementById("carYear").value = "";
+        document.getElementById("carEngineCode").value = "";
+        document.getElementById("carFuelType").value = "0";
+        document.getElementById("carTransmission").value = "0";
+        document.getElementById("carBodyType").value = "0";
+        document.getElementById("carNotes").value = "";
+        document.getElementById("modalError").classList.add("d-none");
+        new bootstrap.Modal(document.getElementById("carModal")).show();
+    }
+
+    function openEditModal(car) {
+        document.getElementById("modalTitle").innerText = "Edit Car";
+        document.getElementById("carId").value = car.Id;
+        document.getElementById("carBrand").value = car.Brand;
+        document.getElementById("carModel").value = car.Model;
+        document.getElementById("carVIN").value = car.VIN || '';
+        document.getElementById("carYear").value = car.Year;
+        document.getElementById("carEngineCode").value = car.EngineCode;
+        document.getElementById("carFuelType").value = car.FuelTypeValue;
+        document.getElementById("carTransmission").value = car.TransmissionValue;
+        document.getElementById("carBodyType").value = car.BodyTypeValue;
+        document.getElementById("carNotes").value = car.ClientNotes ?? "";
+        document.getElementById("modalError").classList.add("d-none");
+        new bootstrap.Modal(document.getElementById("carModal")).show();
+    }
+
+    function submitCar() {
+        const id = document.getElementById("carId").value;
+        const dto = {
+            id: id ? parseInt(id) : 0,
+            brand: document.getElementById("carBrand").value.trim(),
+            model: document.getElementById("carModel").value.trim(),
+            vIN: document.getElementById("carVIN").value.trim(),
+            engineCode: document.getElementById("carEngineCode").value.trim(),
+            year: parseInt(document.getElementById("carYear").value),
+            fuelType: parseInt(document.getElementById("carFuelType").value),
+            transmission: parseInt(document.getElementById("carTransmission").value),
+            bodyType: parseInt(document.getElementById("carBodyType").value),
+            clientNotes: document.getElementById("carNotes").value || null
+        };
+
+        if (!dto.brand || !dto.model || !dto.vIN || !dto.engineCode || !dto.year) {
+            showError("Please fill in all required fields.");
+            return;
+        }
+
+        fetch("/api/portal/car/upsert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dto)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                bootstrap.Modal.getInstance(document.getElementById("carModal")).hide();
+                location.reload();
+            } else {
+                showError(res.error ?? "An error occurred.");
+            }
+        })
+        .catch(() => showError("Network error."));
+    }
+
+    function deleteCar(id) {
+        if (!confirm("Are you sure you want to delete this car?")) return;
+
+        fetch(`/api/portal/car/delete/${id}`, { method: "DELETE" })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                document.getElementById(`card-${id}`)?.remove();
+            } else {
+                alert("Delete failed.");
+            }
+        });
+    }
+
+    function showError(msg) {
+        const el = document.getElementById("modalError");
+        el.innerText = msg;
+        el.classList.remove("d-none");
+    }
+</script>
+}

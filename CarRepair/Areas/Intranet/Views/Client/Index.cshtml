@@ -19,9 +19,12 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Clients</h2>
 
-        <button class="btn btn-primary" onclick="openAddModal()">
-            Add New
-        </button>
+        @if (User.IsInRole("Admin"))
+        {
+            <button class="btn btn-primary" onclick="openAddModal()">
+                Add New
+            </button>
+        }
     </div>
 
     <div id="clientTable"></div>
@@ -84,6 +87,8 @@
 </div>
 
 <script>
+    var isAdmin = @(User.IsInRole("Admin") ? "true" : "false");
+
     var tableData = @Html.Raw(
         System.Text.Json.JsonSerializer.Serialize(
             Model.Clients,
@@ -109,14 +114,14 @@
             { title: "Phone Number", field: "phoneNumber" },
             {
                 title: "Actions",
-                formatter: () => `
+                formatter: () => isAdmin ? `
                     <button class="btn btn-sm btn-warning me-1 edit-btn" title="Edit">
                         <i class="bi bi-pencil-square"></i>
                     </button>
                     <button class="btn btn-sm btn-danger delete-btn" title="Delete">
                         <i class="bi bi-trash"></i>
                     </button>
-                `,
+                ` : '',
                 width: 120,
                 hozAlign: "center",
                 cellClick: (e, cell) => {

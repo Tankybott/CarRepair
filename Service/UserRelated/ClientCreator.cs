@@ -35,6 +35,8 @@ namespace Service.UserRelated
                 throw new InvalidOperationException(errors);
             }
 
+            await _userManager.AddToRoleAsync(user, "Customer");
+
             var profile = new ClientProfile
             {
                 ApplicationUserId = user.Id,

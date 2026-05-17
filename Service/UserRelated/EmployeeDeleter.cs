@@ -23,13 +23,16 @@ namespace Service.UserRelated
             if (profile == null)
                 throw new Exception($"Employee with id {id} not found.");
 
+            var user = await _userManager.FindByIdAsync(profile.ApplicationUserId);
+            if (user != null)
+            {
+                await _userManager.SetLockoutEnabledAsync(user, true);
+                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+            }
+
             profile.Specializations.Clear();
             _employeeRepo.Remove(profile);
             await _employeeRepo.SaveAsync();
-
-            var user = await _userManager.FindByIdAsync(profile.ApplicationUserId);
-            if (user != null)
-                await _userManager.DeleteAsync(user);
         }
     }
 }

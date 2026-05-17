@@ -19,10 +19,6 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Parts</h2>
-
-        <button class="btn btn-primary" onclick="openAddModal()">
-            Add New
-        </button>
     </div>
 
     <div class="row mb-3">
@@ -166,6 +162,7 @@
         responsiveLayout: "collapse",
 
         columns: [
+            { title: "Repair ID", field: "repairId", headerFilter: "input", width: 120 },
             { title: "Name", field: "name", headerFilter: "input" },
             { title: "Serial Number", field: "serialNumber", headerFilter: "input" },
             {
@@ -227,7 +224,9 @@
     function openEditModal(data) {
         document.getElementById("modalTitle").innerText = "Edit Part";
         document.getElementById("partId").value = data.id;
-        document.getElementById("partRepairId").value = data.repairId;
+        const repairIdInput = document.getElementById("partRepairId");
+        repairIdInput.value = data.repairId;
+        repairIdInput.readOnly = true;
         document.getElementById("partName").value = data.name;
         document.getElementById("partSerialNumber").value = data.serialNumber;
         document.getElementById("partManufacturer").value = data.manufacturer || "";

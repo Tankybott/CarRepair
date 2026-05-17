@@ -1,6 +1,13 @@
+using CarRepair.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Model.DomainModel;
+using Model.DTOs.IntranetDto;
 using Model.DTOs.PortalDto;
 using Model.ViewModel;
+using Service.CarRelated.Interface;
+using Service.RepairRelated.Interface;
 using System.Diagnostics;
 using ToolShop.Models;
 
@@ -10,44 +17,73 @@ namespace ToolShop.Areas.Portal.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ICartService _basketService;
+        private readonly ICarReader _carReader;
+        private readonly IRepairCreator _repairCreator;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(
+            ILogger<HomeController> logger,
+            ICartService basketService,
+            ICarReader carReader,
+            IRepairCreator repairCreator,
+            UserManager<ApplicationUser> userManager)
         {
             _logger = logger;
+            _basketService = basketService;
+            _carReader = carReader;
+            _repairCreator = repairCreator;
+            _userManager = userManager;
         }
 
         public IActionResult Index()
         {
             return View();
         }
-        public IActionResult Cart()
+
+        public async Task<IActionResult> Cart()
         {
-            var vm = new CartViewModel
+            var services = _basketService.GetCart(HttpContext.Session);
+            var cars = new List<PortalCarDto>();
+
+            var userId = _userManager.GetUserId(User);
+            if (userId is not null)
+                cars = (await _carReader.GetCarsForUser(userId)).ToList();
+
+            return View(new CartViewModel
             {
-                Services = new List<CartServiceDto>
-                {
-                    new CartServiceDto
-                    {
-                        ServiceName = "Oil Change",
-                        ShortDescription = "Replace engine oil and filter",
-                        EstimatedPrice = 199
-                    },
-                    new CartServiceDto
-                    {
-                        ServiceName = "Brake Inspection",
-                        ShortDescription = "Check pads, discs and brake fluid",
-                        EstimatedPrice = 149
-                    },
-                    new CartServiceDto
-                    {
-                        ServiceName = "Engine Diagnostics",
-                        ShortDescription = "Full OBD-II scan and fault analysis",
-                        EstimatedPrice = 249
-                    }
-                }
+                Services = services,
+                Cars = cars
+            });
+        }
+
+        [HttpPost]
+        public IActionResult RemoveFromBasket(int serviceId)
+        {
+            _basketService.RemoveService(HttpContext.Session, serviceId);
+            return RedirectToAction(nameof(Cart));
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CreateRepair(int carId, string clientDescription)
+        {
+            var services = _basketService.GetCart(HttpContext.Session);
+            if (!services.Any())
+                return RedirectToAction(nameof(Cart));
+
+            var dto = new IntranetRepairCreateDto
+            {
+                CarId = carId,
+                ClientDescription = clientDescription ?? string.Empty,
+                ServiceIds = services.Select(s => s.Id).ToList()
             };
 
-            return View(vm);
+            await _repairCreator.CreateAsync(dto);
+            _basketService.Clear(HttpContext.Session);
+
+            TempData["RepairCreated"] = true;
+            return RedirectToAction("Index", "CarAndRepair", new { area = "Portal" });
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

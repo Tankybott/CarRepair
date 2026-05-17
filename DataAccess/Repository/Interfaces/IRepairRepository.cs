@@ -6,6 +6,7 @@ namespace DataAccess.Repository.Interfaces
     public interface IRepairRepository : IRepository<Repair>
     {
         Task<IEnumerable<Repair>> GetAllWithDetailsAsync();
+        Task<IEnumerable<Repair>> GetAllForCarAndUserAsync(int carId, string userId);
         Task<Repair?> GetWithDetailsAsync(int id);
         Task<Repair?> GetForManageAsync(int id);
         Task<Repair?> GetTrackedWithServicesAsync(int id);

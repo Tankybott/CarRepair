@@ -8,8 +8,9 @@ namespace Model.DTOs.PortalDto
 {
     public class CartServiceDto
     {
-        public string ServiceName { get; set; }
-        public string ShortDescription { get; set; }
+        public int Id { get; set; }
+        public string ServiceName { get; set; } = string.Empty;
+        public string ShortDescription { get; set; } = string.Empty;
         public decimal EstimatedPrice { get; set; }
     }
 }

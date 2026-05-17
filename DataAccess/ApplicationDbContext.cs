@@ -139,6 +139,26 @@ namespace DataAccess
             builder.Entity<Repair>()
                 .HasMany(r => r.ServicesSelected)
                 .WithMany(s => s.Repairs);
+
+            // Part constraints
+            builder.Entity<Part>()
+                .HasCheckConstraint("CK_Part_UnitPrice_NonNegative", "[UnitPrice] >= 0");
+            builder.Entity<Part>()
+                .HasCheckConstraint("CK_Part_Quantity_Min1", "[Quantity] >= 1");
+
+            // Service constraints
+            builder.Entity<Service>()
+                .HasCheckConstraint("CK_Service_AveragePrice_NonNegative", "[AveragePrice] >= 0");
+            builder.Entity<Service>()
+                .HasCheckConstraint("CK_Service_Description_MinLength", "LEN([Description]) >= 30");
+
+            // ServiceType constraints
+            builder.Entity<ServiceType>()
+                .HasCheckConstraint("CK_ServiceType_Description_MinLength", "LEN([Description]) >= 30");
+
+            // Car constraints
+            builder.Entity<Car>()
+                .HasCheckConstraint("CK_Car_Year_Range", "[Year] >= 1886 AND [Year] <= 2100");
         }
     }
 }

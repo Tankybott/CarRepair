@@ -27,15 +27,16 @@
 
             <li><a asp-area="Portal" asp-controller="Home" asp-action="Index" class="nav-link text-white">Back to Portal</a></li>
 
-            <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Employees</a></li>
+            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                <li><a asp-area="Intranet" asp-controller="Employee" asp-action="Index" class="nav-link text-white">Employees</a></li>
+            }
             <li><a asp-area="Intranet" asp-controller="Client" asp-action="Index" class="nav-link text-white">Clients</a></li>
             <li><a asp-area="Intranet" asp-controller="Car" asp-action="Index" class="nav-link text-white">Cars</a></li>
-            <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Employee Schedule</a></li>
             <li><a asp-area="Intranet" asp-controller="Part" asp-action="Index" class="nav-link text-white">Parts</a></li>
-            <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Repairs</a></li>
+            <li><a asp-area="Intranet" asp-controller="Repair" asp-action="Index" class="nav-link text-white">Repairs</a></li>
             <li><a asp-area="Intranet" asp-controller="Servicetype" asp-action="Index" class="nav-link text-white">Service Types</a></li>
             <li><a asp-area="Intranet" asp-controller="Service" asp-action="Index" class="nav-link text-white">Service</a></li>
-            <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Work Task</a></li>
         </ul>
     </div>
 
@@ -54,15 +55,17 @@
 
                     <li><a asp-area="Portal" asp-controller="Home" asp-action="Index" class="nav-link text-white">Back to Portal</a></li>
 
-                    <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Employees</a></li>
+                    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                    {
+                        <li><a asp-area="Intranet" asp-controller="Employee" asp-action="Index" class="nav-link text-white">Employees</a></li>
+                    }
                     <li><a asp-area="Intranet" asp-controller="Client" asp-action="Index" class="nav-link text-white">Clients</a></li>
                     <li><a asp-area="Intranet" asp-controller="Car" asp-action="Index" class="nav-link text-white">Cars</a></li>
-                    <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Employee Schedule</a></li>
-                    <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Parts</a></li>
-                    <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Repairs</a></li>
-                    <li><a asp-area="Intranet" asp-controller="Servicetype" asp-action="index" class="nav-link text-white">Service Types</a></li>
+                    <li><a asp-area="Intranet" asp-controller="Part" asp-action="Index" class="nav-link text-white">Parts</a></li>
+                    <li><a asp-area="Intranet" asp-controller="Repair" asp-action="Index" class="nav-link text-white">Repairs</a></li>
+                    <li><a asp-area="Intranet" asp-controller="Servicetype" asp-action="Index" class="nav-link text-white">Service Types</a></li>
                     <li><a asp-area="Intranet" asp-controller="Service" asp-action="Index" class="nav-link text-white">Service</a></li>
-                    <li><a asp-area="Intranet" asp-controller="Home" asp-action="Index" class="nav-link text-white">Work Task</a></li>
+
                 </ul>
 
                 <hr class="border-secondary" />

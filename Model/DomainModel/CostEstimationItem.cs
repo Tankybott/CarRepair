@@ -32,6 +32,7 @@ namespace Model.DomainModel
     {
         Service = 0,
         Part = 1,
-        Other = 2
+        Other = 2,
+        Overhead = 3
     }
 }

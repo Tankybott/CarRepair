@@ -23,9 +23,13 @@ namespace Model.DTOs.IntranetDto
         public string ClientFullName { get; set; } = string.Empty;
         public string ClientEmail { get; set; } = string.Empty;
 
+        public DateTime? BookingStart { get; set; }
+        public DateTime? BookingEnd { get; set; }
+
         public List<IntranetServiceReadDto> Services { get; set; } = new();
         public List<IntranetPartReadDto> Parts { get; set; } = new();
         public List<IntranetCostEstimationItemReadDto> CostEstimations { get; set; } = new();
+        public List<IntranetCostEstimationItemReadDto> OverheadCosts { get; set; } = new();
         public List<IntranetServiceReadDto> AllAvailableServices { get; set; } = new();
     }
 }

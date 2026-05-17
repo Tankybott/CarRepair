@@ -38,29 +38,18 @@
                            asp-controller="Offer" asp-action="Index">Offer</a>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CarAndRepair" ? "text-warning fw-bold" : "text-dark")"
-                           asp-controller="CarAndRepair" asp-action="Index">Your Cars & Repairs</a>
-                    </li>
-
-                    <li class="nav-item ms-lg-4 d-none d-lg-block">
-                        <a asp-controller="Account" asp-action="Index"
-                           class="nav-link border border-warning rounded-pill px-3 py-1 fs-5 text-dark">
-                            <i class="bi bi-person-circle"></i>
-                        </a>
-                    </li>
+                    @if (User.Identity!.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CarAndRepair" ? "text-warning fw-bold" : "text-dark")"
+                               asp-controller="CarAndRepair" asp-action="Index">Your Cars & Repairs</a>
+                        </li>
+                    }
 
                     <li class="nav-item ms-lg-2 d-none d-lg-block">
                         <a asp-area="Portal" asp-controller="Home" asp-action="Cart"
                            class="nav-link border border-warning rounded-pill px-3 py-1 fs-5 text-dark">
                             <i class="bi bi-cart"></i>
-                        </a>
-                    </li>
-
-                    <li class="nav-item d-lg-none mt-3">
-                        <a asp-controller="Account" asp-action="Index"
-                           class="btn btn-outline-dark border-warning rounded-pill w-100 py-2">
-                            <i class="bi bi-person-circle me-2"></i> Account
                         </a>
                     </li>
 
@@ -75,15 +64,35 @@
 
                 <div class="d-flex align-items-center gap-3 ms-2 w-auto mt-4 mt-lg-0">
 
-                    <a asp-area="Intranet" asp-controller="Home" asp-action="Index"
-                       class="btn btn-dark rounded-pill px-4">
-                        Work App
-                    </a>
+                    @if (User.IsInRole("Admin") || User.IsInRole("Manager") || User.IsInRole("Employee"))
+                    {
+                        <a asp-area="Intranet" asp-controller="Home" asp-action="Index"
+                           class="btn btn-dark rounded-pill px-4">
+                            Work App
+                        </a>
+                    }
 
-                    <a asp-controller="Auth" asp-action="Login"
-                       class="px-4 btn btn-outline-dark rounded-pill">
-                        Login
-                    </a>
+                    @if (User.Identity!.IsAuthenticated)
+                    {
+                        <span class="text-muted small d-none d-lg-inline">@User.Identity.Name</span>
+                        <form asp-area="Portal" asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="px-4 btn btn-outline-dark rounded-pill">
+                                Logout
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-area="Portal" asp-controller="Auth" asp-action="Register"
+                           class="px-4 btn btn-outline-dark rounded-pill">
+                            Register
+                        </a>
+                        <a asp-area="Portal" asp-controller="Auth" asp-action="Login"
+                           class="px-4 btn btn-warning rounded-pill">
+                            Login
+                        </a>
+                    }
                 </div>
 
             </div>
@@ -109,6 +118,7 @@
         </div>
     </footer>
 
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 

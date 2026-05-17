@@ -16,7 +16,10 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Employees</h2>
-        <button class="btn btn-primary" onclick="openAddModal()">Add New</button>
+        @if (User.IsInRole("Admin"))
+        {
+            <button class="btn btn-primary" onclick="openAddModal()">Add New</button>
+        }
     </div>
 
     <div id="employeeTable"></div>
@@ -50,6 +53,13 @@
                                 <label class="form-label">Confirm Password</label>
                                 <input class="form-control" type="password" id="employeeConfirmPassword" />
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" id="employeeRole">
+                                <option value="Employee" selected>Employee</option>
+                                <option value="Manager">Manager</option>
+                            </select>
                         </div>
                     </div>
 
@@ -154,6 +164,8 @@
 </div>
 
 <script>
+    var isAdmin = @(User.IsInRole("Admin") ? "true" : "false");
+
     var tableData = @Html.Raw(
         System.Text.Json.JsonSerializer.Serialize(
             Model.Employees,
@@ -190,12 +202,13 @@
                     <button class="btn btn-sm btn-secondary me-1 availability-btn" title="Show Availability">
                         <i class="bi bi-calendar-week"></i>
                     </button>
+                    ${isAdmin ? `
                     <button class="btn btn-sm btn-warning me-1 edit-btn" title="Edit">
                         <i class="bi bi-pencil-square"></i>
                     </button>
                     <button class="btn btn-sm btn-danger delete-btn" title="Delete">
                         <i class="bi bi-trash"></i>
-                    </button>
+                    </button>` : ''}
                 `,
                 width: 190,
                 hozAlign: "center",
@@ -228,6 +241,7 @@
         document.getElementById("employeeNewPassword").value = "";
         document.getElementById("employeeConfirmNewPassword").value = "";
         document.querySelectorAll(".spec-checkbox").forEach(cb => cb.checked = false);
+        document.getElementById("employeeRole").value = "Employee";
         document.getElementById("credentialFields").style.display = "block";
         document.getElementById("passwordChangeFields").style.display = "none";
         setCredentialFieldsRequired(true);
@@ -327,6 +341,7 @@
                 name: document.getElementById("employeeName").value,
                 surname: document.getElementById("employeeSurname").value,
                 employeeNumber: document.getElementById("employeeNumber").value,
+                role: document.getElementById("employeeRole").value,
                 specializationIds
             }
             : {

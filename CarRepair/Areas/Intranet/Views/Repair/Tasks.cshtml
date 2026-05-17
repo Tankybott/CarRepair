@@ -6,6 +6,8 @@
     var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 }
 
+<link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+<script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 <div class="container mt-4">
@@ -23,63 +25,7 @@
         </button>
     </div>
 
-    @if (!Model.Tasks.Any())
-    {
-        <div class="alert alert-info">No tasks yet. Add the first one above.</div>
-    }
-    else
-    {
-        <table class="table table-bordered table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Description</th>
-                    <th>Predicted Start</th>
-                    <th>Predicted End</th>
-                    <th>Employees</th>
-                    <th>Status</th>
-                    <th class="text-center" style="width:180px">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="tasksTableBody">
-                @foreach (var task in Model.Tasks)
-                {
-                    <tr id="task-row-@task.Id">
-                        <td>@task.Description</td>
-                        <td>@task.PredictedStart.ToString("dd.MM.yyyy HH:mm")</td>
-                        <td>@task.PredictedEnd.ToString("dd.MM.yyyy HH:mm")</td>
-                        <td>
-                            @if (task.AssignedEmployeeNames.Any())
-                            {
-                                @string.Join(", ", task.AssignedEmployeeNames)
-                            }
-                            else
-                            {
-                                <span class="text-muted">—</span>
-                            }
-                        </td>
-                        <td><span class="badge bg-secondary">@task.Status</span></td>
-                        <td class="text-center">
-                            @if (task.StatusValue == 0)
-                            {
-                                <button class="btn btn-sm btn-outline-primary me-1" title="Edit"
-                                        onclick='openEditModal(@Html.Raw(JsonSerializer.Serialize(task, jsonOptions)))'>
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-warning me-1" title="Cancel"
-                                        onclick="cancelTask(@task.Id)">
-                                    <i class="bi bi-x-circle"></i>
-                                </button>
-                            }
-                            <button class="btn btn-sm btn-outline-danger" title="Delete"
-                                    onclick="deleteTask(@task.Id)">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+    <div id="tasksTable" class="mb-4"></div>
 
     <hr class="my-4">
 
@@ -168,6 +114,8 @@
     const repairId = @Model.RepairId;
     let selectedServiceTypeId = null;
 
+    const tableData = @Html.Raw(JsonSerializer.Serialize(Model.Tasks, jsonOptions));
+
     const existingDelivery = @Html.Raw(Model.ExistingDelivery.HasValue
         ? JsonSerializer.Serialize(Model.ExistingDelivery.Value, jsonOptions)
         : "null");
@@ -177,17 +125,64 @@
     if (existingDelivery) document.getElementById('deliveryDateTime').value = toLocalInput(existingDelivery);
     if (existingPickup) document.getElementById('pickupDateTime').value = toLocalInput(existingPickup);
 
-    const taskTimes = @Html.Raw(JsonSerializer.Serialize(
-        Model.Tasks
-            .Where(t => t.StatusValue != 2)
-            .Select(t => new { start = t.PredictedStart.ToString("yyyy-MM-ddTHH:mm"), end = t.PredictedEnd.ToString("yyyy-MM-ddTHH:mm") })
-            .ToList(), jsonOptions));
+    const taskTimes = tableData
+        .filter(t => t.statusValue !== 2)
+        .map(t => ({ start: t.predictedStart.slice(0, 16), end: t.predictedEnd.slice(0, 16) }));
 
-    const takenServiceIds = new Set(@Html.Raw(JsonSerializer.Serialize(
-        Model.Tasks
-            .Where(t => t.StatusValue != 2 && t.ServiceId.HasValue)
-            .Select(t => t.ServiceId!.Value)
-            .ToList(), jsonOptions)));
+    const takenServiceIds = new Set(tableData
+        .filter(t => t.statusValue !== 2 && t.serviceId != null)
+        .map(t => t.serviceId));
+
+    function fmtDt(iso) {
+        const d = new Date(iso);
+        const p = n => String(n).padStart(2, '0');
+        return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    new Tabulator("#tasksTable", {
+        index: "id",
+        data: tableData,
+        layout: "fitColumns",
+        responsiveLayout: "collapse",
+        movableColumns: true,
+        placeholder: "No tasks yet.",
+        columns: [
+            { title: "Description", field: "description", minWidth: 200 },
+            { title: "Predicted Start", field: "predictedStart", formatter: cell => fmtDt(cell.getValue()), width: 160 },
+            { title: "Predicted End", field: "predictedEnd", formatter: cell => fmtDt(cell.getValue()), width: 160 },
+            {
+                title: "Employees", field: "assignedEmployeeNames",
+                formatter: cell => cell.getValue().length ? cell.getValue().join(', ') : '<span class="text-muted">—</span>',
+                minWidth: 150
+            },
+            {
+                title: "Status", field: "status",
+                formatter: cell => `<span class="badge bg-secondary">${cell.getValue()}</span>`,
+                width: 110
+            },
+            {
+                title: "Actions",
+                formatter: cell => {
+                    const d = cell.getRow().getData();
+                    let html = '';
+                    if (d.statusValue === 0) {
+                        html += `<button class="btn btn-sm btn-outline-primary me-1 edit-btn" title="Edit"><i class="bi bi-pencil-square"></i></button>`;
+                        html += `<button class="btn btn-sm btn-outline-warning me-1 cancel-btn" title="Cancel"><i class="bi bi-x-circle"></i></button>`;
+                    }
+                    html += `<button class="btn btn-sm btn-outline-danger delete-btn" title="Delete"><i class="bi bi-trash"></i></button>`;
+                    return html;
+                },
+                width: 150,
+                hozAlign: "center",
+                cellClick: (e, cell) => {
+                    const data = cell.getRow().getData();
+                    if (e.target.closest(".edit-btn")) openEditModal(data);
+                    if (e.target.closest(".cancel-btn")) cancelTask(data.id);
+                    if (e.target.closest(".delete-btn")) deleteTask(data.id);
+                }
+            }
+        ]
+    });
 
     function onServiceChange() {
         const opt = document.getElementById('taskServiceId').selectedOptions[0];

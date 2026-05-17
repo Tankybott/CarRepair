@@ -1,10 +1,15 @@
 @model Model.DTOs.IntranetDto.IntranetRepairManageDto
+@using System.Text.Json
 
 @{
     ViewData["Title"] = $"Repair #{Model.RepairId}";
     bool isPending = Model.StatusValue == 0;
+    bool isScheduled = Model.StatusValue == 3;
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 }
 
+<link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+<script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 <div class="container mt-4">
@@ -12,10 +17,23 @@
     <div class="d-flex align-items-center gap-3 mb-4">
         <a href="/Intranet/Repair" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i> Back
-        </a>Okay
+        </a>
         <h2 class="mb-0">Repair #@Model.RepairId</h2>
         <span class="badge bg-secondary fs-6">@Model.Status</span>
     </div>
+
+    @if (Model.BookingStart.HasValue)
+    {
+        <div class="alert alert-info d-flex align-items-center gap-3 rounded-3 mb-4">
+            <i class="bi bi-calendar-event fs-4"></i>
+            <div>
+                <strong>Scheduled:</strong>
+                @Model.BookingStart.Value.ToString("dd MMM yyyy HH:mm")
+                &ndash;
+                @Model.BookingEnd!.Value.ToString("dd MMM yyyy HH:mm")
+            </div>
+        </div>
+    }
 
     <div class="row g-4">
 
@@ -26,22 +44,16 @@
                     <dl class="row mb-0">
                         <dt class="col-5">Brand / Model</dt>
                         <dd class="col-7">@Model.CarBrand @Model.CarModel</dd>
-
                         <dt class="col-5">Year</dt>
                         <dd class="col-7">@Model.CarYear</dd>
-
                         <dt class="col-5">VIN</dt>
                         <dd class="col-7"><code>@Model.CarVIN</code></dd>
-
                         <dt class="col-5">Engine Code</dt>
                         <dd class="col-7">@Model.CarEngineCode</dd>
-
                         <dt class="col-5">Fuel Type</dt>
                         <dd class="col-7">@Model.CarFuelType</dd>
-
                         <dt class="col-5">Transmission</dt>
                         <dd class="col-7">@Model.CarTransmission</dd>
-
                         <dt class="col-5">Body Type</dt>
                         <dd class="col-7">@Model.CarBodyType</dd>
                     </dl>
@@ -56,7 +68,6 @@
                     <dl class="row mb-0">
                         <dt class="col-5">Name</dt>
                         <dd class="col-7">@Model.ClientFullName</dd>
-
                         <dt class="col-5">Email</dt>
                         <dd class="col-7">@(string.IsNullOrEmpty(Model.ClientEmail) ? "—" : Model.ClientEmail)</dd>
                     </dl>
@@ -70,7 +81,8 @@
                     <span><i class="bi bi-info-circle me-2"></i>Repair Details</span>
                     @if (isPending && Model.AllAvailableServices.Any())
                     {
-                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addServicesModal">
+                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                data-bs-toggle="modal" data-bs-target="#addServicesModal">
                             <i class="bi bi-plus-circle me-1"></i> Add Services
                         </button>
                     }
@@ -106,31 +118,7 @@
                 <div class="card">
                     <div class="card-header fw-semibold"><i class="bi bi-receipt me-2"></i>Cost Estimation</div>
                     <div class="card-body p-0">
-                        <table class="table table-sm mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Description</th>
-                                    <th class="text-end">Cost</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in Model.CostEstimations)
-                                {
-                                    <tr>
-                                        <td>@item.Name</td>
-                                        <td><span class="badge bg-light text-dark">@item.Type</span></td>
-                                        <td class="text-muted small">@item.Description</td>
-                                        <td class="text-end">€@item.Cost.ToString("F2")</td>
-                                    </tr>
-                                }
-                                <tr class="table-light fw-semibold">
-                                    <td colspan="3">Predicted Total</td>
-                                    <td class="text-end">€@Model.PredictedPrice.ToString("F2")</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div id="costEstimationTable"></div>
                     </div>
                     @if (Model.StatusValue < 2)
                     {
@@ -150,31 +138,21 @@
                 <div class="card">
                     <div class="card-header fw-semibold"><i class="bi bi-tools me-2"></i>Parts</div>
                     <div class="card-body p-0">
-                        <table class="table table-sm mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Manufacturer</th>
-                                    <th>Serial</th>
-                                    <th>Qty</th>
-                                    <th class="text-end">Unit Price</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var part in Model.Parts)
-                                {
-                                    <tr>
-                                        <td>@part.Name</td>
-                                        <td>@(part.Manufacturer ?? "—")</td>
-                                        <td><code>@part.SerialNumber</code></td>
-                                        <td>@part.Quantity</td>
-                                        <td class="text-end">€@part.UnitPrice.ToString("F2")</td>
-                                        <td><span class="badge bg-secondary">@part.Status</span></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                        <div id="partsTable"></div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.OverheadCosts.Any())
+        {
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header fw-semibold text-warning-emphasis bg-warning-subtle">
+                        <i class="bi bi-plus-slash-minus me-2"></i>Overhead Costs (In Progress)
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="overheadTable"></div>
                     </div>
                 </div>
             </div>
@@ -195,6 +173,12 @@
                 <i class="bi bi-list-task me-1"></i> Manage Tasks
             </a>
         }
+        @if (isScheduled)
+        {
+            <a href="/Intranet/Repair/Overhead/@Model.RepairId" class="btn btn-outline-warning">
+                <i class="bi bi-plus-slash-minus me-1"></i> Overhead Costs
+            </a>
+        }
     </div>
 
 </div>
@@ -212,7 +196,8 @@
                     @foreach (var svc in Model.AllAvailableServices)
                     {
                         <div class="form-check">
-                            <input class="form-check-input add-svc-checkbox" type="checkbox" value="@svc.Id" id="addSvc_@svc.Id" />
+                            <input class="form-check-input add-svc-checkbox" type="checkbox"
+                                   value="@svc.Id" id="addSvc_@svc.Id" />
                             <label class="form-check-label" for="addSvc_@svc.Id">
                                 @svc.ServiceName
                                 <span class="text-muted small ms-1">(@svc.ServiceType)</span>
@@ -231,6 +216,81 @@
 
 <script>
     const repairId = @Model.RepairId;
+
+    @if (Model.CostEstimations.Any())
+    {
+        <text>
+    new Tabulator("#costEstimationTable", {
+        data: @Html.Raw(JsonSerializer.Serialize(Model.CostEstimations, jsonOptions)),
+        layout: "fitColumns",
+        responsiveLayout: "collapse",
+        movableColumns: true,
+        columns: [
+            { title: "Name", field: "name" },
+            {
+                title: "Type", field: "type",
+                formatter: (cell) => `<span class="badge bg-light text-dark">${cell.getValue()}</span>`
+            },
+            { title: "Description", field: "description", formatter: (cell) => cell.getValue() || "—" },
+            {
+                title: "Cost", field: "cost", hozAlign: "right",
+                formatter: (cell) => `€${parseFloat(cell.getValue()).toFixed(2)}`,
+                bottomCalc: "sum",
+                bottomCalcFormatter: (cell) => `<strong>€${parseFloat(cell.getValue()).toFixed(2)}</strong>`,
+                bottomCalcParams: { label: "Total" }
+            }
+        ]
+    });
+        </text>
+    }
+
+    @if (Model.Parts.Any())
+    {
+        <text>
+    new Tabulator("#partsTable", {
+        data: @Html.Raw(JsonSerializer.Serialize(Model.Parts, jsonOptions)),
+        layout: "fitColumns",
+        responsiveLayout: "collapse",
+        movableColumns: true,
+        columns: [
+            { title: "Name", field: "name" },
+            { title: "Manufacturer", field: "manufacturer", formatter: (cell) => cell.getValue() || "—" },
+            { title: "Serial Number", field: "serialNumber", formatter: (cell) => `<code>${cell.getValue()}</code>` },
+            { title: "Qty", field: "quantity", width: 80, hozAlign: "center" },
+            {
+                title: "Unit Price", field: "unitPrice", hozAlign: "right",
+                formatter: (cell) => `€${parseFloat(cell.getValue()).toFixed(2)}`
+            },
+            {
+                title: "Status", field: "status",
+                formatter: (cell) => `<span class="badge bg-secondary">${cell.getValue()}</span>`
+            }
+        ]
+    });
+        </text>
+    }
+
+    @if (Model.OverheadCosts.Any())
+    {
+        <text>
+    new Tabulator("#overheadTable", {
+        data: @Html.Raw(JsonSerializer.Serialize(Model.OverheadCosts, jsonOptions)),
+        layout: "fitColumns",
+        responsiveLayout: "collapse",
+        movableColumns: true,
+        columns: [
+            { title: "Name", field: "name" },
+            { title: "Description", field: "description", formatter: (cell) => cell.getValue() || "—" },
+            {
+                title: "Cost", field: "cost", hozAlign: "right",
+                formatter: (cell) => `€${parseFloat(cell.getValue()).toFixed(2)}`,
+                bottomCalc: "sum",
+                bottomCalcFormatter: (cell) => `<strong>€${parseFloat(cell.getValue()).toFixed(2)}</strong>`
+            }
+        ]
+    });
+        </text>
+    }
 
     function saveAddedServices() {
         const serviceIds = Array.from(document.querySelectorAll('.add-svc-checkbox:checked'))
