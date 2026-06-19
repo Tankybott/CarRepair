@@ -67,7 +67,7 @@ namespace DataAccess.Repository
             return await query.FirstOrDefaultAsync(filter);
         }
 
-        public void Remove(T entity)
+        public virtual void Remove(T entity)
         {
             if (entity is ISoftDeletable soft)
             {
@@ -80,7 +80,7 @@ namespace DataAccess.Repository
             }
         }
 
-        public void RemoveRange(IEnumerable<T> entities)
+        public virtual void RemoveRange(IEnumerable<T> entities)
         {
             if (typeof(ISoftDeletable).IsAssignableFrom(typeof(T)))
             {

@@ -1,9 +1,12 @@
+using DataAccess.Repository.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Model.DomainModel;
 using Model.DTOs.IntranetDto;
 using Model.ViewModel;
 using Service.ServiceTypeRelated.Interface;
 using Service.UserRelated.Interface;
+using Service.WebsiteConfigRelated.Interface;
 
 namespace CarRepair.Areas.Intranet.Controllers
 {
@@ -16,14 +19,25 @@ namespace CarRepair.Areas.Intranet.Controllers
         private readonly IEmployeeDeleter _employeeDeleter;
         private readonly IEmployeeReader _employeeReader;
         private readonly IServiceTypeReader _serviceTypeReader;
+        private readonly IEmployeeBookingRepository _bookingRepo;
+        private readonly IWebsiteConfigReader _websiteConfigReader;
 
-        public EmployeeController(IEmployeeCreator employeeCreator, IEmployeeUpdater employeeUpdater, IEmployeeDeleter employeeDeleter, IEmployeeReader employeeReader, IServiceTypeReader serviceTypeReader)
+        public EmployeeController(
+            IEmployeeCreator employeeCreator,
+            IEmployeeUpdater employeeUpdater,
+            IEmployeeDeleter employeeDeleter,
+            IEmployeeReader employeeReader,
+            IServiceTypeReader serviceTypeReader,
+            IEmployeeBookingRepository bookingRepo,
+            IWebsiteConfigReader websiteConfigReader)
         {
             _employeeCreator = employeeCreator;
             _employeeUpdater = employeeUpdater;
             _employeeDeleter = employeeDeleter;
             _employeeReader = employeeReader;
             _serviceTypeReader = serviceTypeReader;
+            _bookingRepo = bookingRepo;
+            _websiteConfigReader = websiteConfigReader;
         }
 
         public async Task<IActionResult> Index()
@@ -93,6 +107,49 @@ namespace CarRepair.Areas.Intranet.Controllers
         {
             await _employeeDeleter.DeleteAsync(id);
             return Ok(new { success = true, message = "Deleted successfully." });
+        }
+
+        [HttpGet]
+        [Route("api/employee/{id:int}/bookings")]
+        public async Task<IActionResult> GetBookings(int id, [FromQuery] string date)
+        {
+            if (!DateOnly.TryParse(date, out var parsedDate))
+                return BadRequest(new { error = "Invalid date." });
+
+            var dayStart = parsedDate.ToDateTime(TimeOnly.MinValue);
+            var dayEnd = dayStart.AddDays(1);
+
+            var bookings = await _bookingRepo.GetAllAsync(
+                b => b.EmployeeProfileId == id && b.StartDateTime < dayEnd && b.EndDateTime > dayStart,
+                tracked: false,
+                b => b.Task);
+
+            var config = await _websiteConfigReader.GetConfigAsync();
+            var schedule = parsedDate.DayOfWeek switch
+            {
+                DayOfWeek.Monday => config.MondaySchedule,
+                DayOfWeek.Tuesday => config.TuesdaySchedule,
+                DayOfWeek.Wednesday => config.WednesdaySchedule,
+                DayOfWeek.Thursday => config.ThursdaySchedule,
+                DayOfWeek.Friday => config.FridaySchedule,
+                DayOfWeek.Saturday => config.SaturdaySchedule,
+                DayOfWeek.Sunday => config.SundaySchedule,
+                _ => null
+            };
+
+            var result = bookings
+                .OrderBy(b => b.StartDateTime)
+                .Select(b => new
+                {
+                    start = b.StartDateTime.ToString("HH:mm"),
+                    end = b.EndDateTime.ToString("HH:mm"),
+                    type = b.BookingType.ToString(),
+                    label = b.BookingType == BookingType.Task && b.Task != null
+                        ? b.Task.Description
+                        : b.BookingType.ToString()
+                });
+
+            return Ok(new { schedule, bookings = result });
         }
     }
 }

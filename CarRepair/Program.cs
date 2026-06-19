@@ -46,6 +46,7 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     await IdentitySeeder.SeedRolesAndAdminAsync(services);
+    await WebsiteConfigSeeder.SeedAsync(services);
 }
 
 // Configure the HTTP request pipeline.

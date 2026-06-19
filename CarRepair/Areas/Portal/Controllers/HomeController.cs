@@ -8,6 +8,7 @@ using Model.DTOs.PortalDto;
 using Model.ViewModel;
 using Service.CarRelated.Interface;
 using Service.RepairRelated.Interface;
+using Service.WebsiteConfigRelated.Interface;
 using System.Diagnostics;
 using ToolShop.Models;
 
@@ -21,24 +22,28 @@ namespace ToolShop.Areas.Portal.Controllers
         private readonly ICarReader _carReader;
         private readonly IRepairCreator _repairCreator;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IWebsiteConfigReader _configReader;
 
         public HomeController(
             ILogger<HomeController> logger,
             ICartService basketService,
             ICarReader carReader,
             IRepairCreator repairCreator,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IWebsiteConfigReader configReader)
         {
             _logger = logger;
             _basketService = basketService;
             _carReader = carReader;
             _repairCreator = repairCreator;
             _userManager = userManager;
+            _configReader = configReader;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var config = await _configReader.GetConfigAsync();
+            return View(config);
         }
 
         public async Task<IActionResult> Cart()

@@ -8,6 +8,7 @@ using Model.ViewModel;
 using Service.RepairRelated.Interface;
 using Service.ServiceRelated.Interface;
 using Service.UserRelated.Interface;
+using Service.WebsiteConfigRelated.Interface;
 using Service.WorkTaskRelated.Interface;
 
 namespace CarRepair.Areas.Intranet.Controllers
@@ -33,6 +34,7 @@ namespace CarRepair.Areas.Intranet.Controllers
         private readonly ICarRepository _carRepository;
         private readonly IRepairRepository _repairRepository;
         private readonly IWorkTaskRepository _workTaskRepository;
+        private readonly IWebsiteConfigReader _websiteConfigReader;
         private readonly IMapper _mapper;
 
         public RepairController(
@@ -53,6 +55,7 @@ namespace CarRepair.Areas.Intranet.Controllers
             ICarRepository carRepository,
             IRepairRepository repairRepository,
             IWorkTaskRepository workTaskRepository,
+            IWebsiteConfigReader websiteConfigReader,
             IMapper mapper)
         {
             _repairCreator = repairCreator;
@@ -72,6 +75,7 @@ namespace CarRepair.Areas.Intranet.Controllers
             _carRepository = carRepository;
             _repairRepository = repairRepository;
             _workTaskRepository = workTaskRepository;
+            _websiteConfigReader = websiteConfigReader;
             _mapper = mapper;
         }
 
@@ -142,6 +146,18 @@ namespace CarRepair.Areas.Intranet.Controllers
                 var tasks = await _workTaskRepository.GetAllForRepairAsync(id);
                 var taskDtos = _mapper.Map<IEnumerable<IntranetWorkTaskReadDto>>(tasks);
                 var serviceDtos = _mapper.Map<IEnumerable<IntranetServiceReadDto>>(repair.ServicesSelected);
+                var config = await _websiteConfigReader.GetConfigAsync();
+
+                var workingHours = new Dictionary<int, Model.DTOs.IntranetDto.DayScheduleDto?>
+                {
+                    { 0, config.SundaySchedule },
+                    { 1, config.MondaySchedule },
+                    { 2, config.TuesdaySchedule },
+                    { 3, config.WednesdaySchedule },
+                    { 4, config.ThursdaySchedule },
+                    { 5, config.FridaySchedule },
+                    { 6, config.SaturdaySchedule },
+                };
 
                 return View(new IntranetRepairTasksViewModel
                 {
@@ -151,7 +167,8 @@ namespace CarRepair.Areas.Intranet.Controllers
                     Tasks = taskDtos,
                     Services = serviceDtos,
                     ExistingDelivery = repair.Booking?.StartDateTime,
-                    ExistingPickup = repair.Booking?.EndDateTime
+                    ExistingPickup = repair.Booking?.EndDateTime,
+                    WorkingHours = workingHours
                 });
             }
             catch
@@ -234,16 +251,30 @@ namespace CarRepair.Areas.Intranet.Controllers
         [Route("api/repair/task/create")]
         public async Task<IActionResult> CreateTask([FromBody] IntranetWorkTaskCreateDto dto)
         {
-            var saved = await _workTaskCreator.CreateAsync(dto);
-            return Ok(new { success = true, message = "Task created.", data = saved });
+            try
+            {
+                var saved = await _workTaskCreator.CreateAsync(dto);
+                return Ok(new { success = true, message = "Task created.", data = saved });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Ok(new { success = false, error = ex.Message });
+            }
         }
 
         [HttpPost]
         [Route("api/repair/task/update")]
         public async Task<IActionResult> UpdateTask([FromBody] IntranetWorkTaskUpdateDto dto)
         {
-            var saved = await _workTaskUpdater.UpdateAsync(dto);
-            return Ok(new { success = true, message = "Task updated.", data = saved });
+            try
+            {
+                var saved = await _workTaskUpdater.UpdateAsync(dto);
+                return Ok(new { success = true, message = "Task updated.", data = saved });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Ok(new { success = false, error = ex.Message });
+            }
         }
 
         [HttpPost]

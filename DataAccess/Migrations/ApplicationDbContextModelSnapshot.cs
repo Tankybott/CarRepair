@@ -299,7 +299,10 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("Cars");
+                    b.ToTable("Cars", t =>
+                        {
+                            t.HasCheckConstraint("CK_Car_Year_Range", "[Year] >= 1886 AND [Year] <= 2100");
+                        });
                 });
 
             modelBuilder.Entity("Model.DomainModel.ClientProfile", b =>
@@ -487,7 +490,12 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("RepairId");
 
-                    b.ToTable("Parts");
+                    b.ToTable("Parts", t =>
+                        {
+                            t.HasCheckConstraint("CK_Part_Quantity_Min1", "[Quantity] >= 1");
+
+                            t.HasCheckConstraint("CK_Part_UnitPrice_NonNegative", "[UnitPrice] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Model.DomainModel.Repair", b =>
@@ -584,7 +592,12 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("ServiceTypeId");
 
-                    b.ToTable("Services");
+                    b.ToTable("Services", t =>
+                        {
+                            t.HasCheckConstraint("CK_Service_AveragePrice_NonNegative", "[AveragePrice] >= 0");
+
+                            t.HasCheckConstraint("CK_Service_Description_MinLength", "LEN([Description]) >= 30");
+                        });
                 });
 
             modelBuilder.Entity("Model.DomainModel.ServiceType", b =>
@@ -608,7 +621,31 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ServiceTypes");
+                    b.ToTable("ServiceTypes", t =>
+                        {
+                            t.HasCheckConstraint("CK_ServiceType_Description_MinLength", "LEN([Description]) >= 30");
+                        });
+                });
+
+            modelBuilder.Entity("Model.DomainModel.WebsiteConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("PortalHomeText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PortalHomeTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WebsiteConfigs");
                 });
 
             modelBuilder.Entity("Model.DomainModel.WorkTask", b =>
@@ -858,6 +895,170 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("ServiceType");
+                });
+
+            modelBuilder.Entity("Model.DomainModel.WebsiteConfig", b =>
+                {
+                    b.OwnsOne("Model.DomainModel.DaySchedule", "FridaySchedule", b1 =>
+                        {
+                            b1.Property<int>("WebsiteConfigId")
+                                .HasColumnType("int");
+
+                            b1.Property<TimeOnly?>("CloseTime")
+                                .HasColumnType("time")
+                                .HasColumnName("FridayCloseTime");
+
+                            b1.Property<TimeOnly?>("OpenTime")
+                                .HasColumnType("time")
+                                .HasColumnName("FridayOpenTime");
+
+                            b1.HasKey("WebsiteConfigId");
+
+                            b1.ToTable("WebsiteConfigs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WebsiteConfigId");
+                        });
+
+                    b.OwnsOne("Model.DomainModel.DaySchedule", "MondaySchedule", b1 =>
+                        {
+                            b1.Property<int>("WebsiteConfigId")
+                                .HasColumnType("int");
+
+                            b1.Property<TimeOnly?>("CloseTime")
+                                .HasColumnType("time")
+                                .HasColumnName("MondayCloseTime");
+
+                            b1.Property<TimeOnly?>("OpenTime")
+                                .HasColumnType("time")
+                                .HasColumnName("MondayOpenTime");
+
+                            b1.HasKey("WebsiteConfigId");
+
+                            b1.ToTable("WebsiteConfigs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WebsiteConfigId");
+                        });
+
+                    b.OwnsOne("Model.DomainModel.DaySchedule", "SaturdaySchedule", b1 =>
+                        {
+                            b1.Property<int>("WebsiteConfigId")
+                                .HasColumnType("int");
+
+                            b1.Property<TimeOnly?>("CloseTime")
+                                .HasColumnType("time")
+                                .HasColumnName("SaturdayCloseTime");
+
+                            b1.Property<TimeOnly?>("OpenTime")
+                                .HasColumnType("time")
+                                .HasColumnName("SaturdayOpenTime");
+
+                            b1.HasKey("WebsiteConfigId");
+
+                            b1.ToTable("WebsiteConfigs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WebsiteConfigId");
+                        });
+
+                    b.OwnsOne("Model.DomainModel.DaySchedule", "SundaySchedule", b1 =>
+                        {
+                            b1.Property<int>("WebsiteConfigId")
+                                .HasColumnType("int");
+
+                            b1.Property<TimeOnly?>("CloseTime")
+                                .HasColumnType("time")
+                                .HasColumnName("SundayCloseTime");
+
+                            b1.Property<TimeOnly?>("OpenTime")
+                                .HasColumnType("time")
+                                .HasColumnName("SundayOpenTime");
+
+                            b1.HasKey("WebsiteConfigId");
+
+                            b1.ToTable("WebsiteConfigs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WebsiteConfigId");
+                        });
+
+                    b.OwnsOne("Model.DomainModel.DaySchedule", "ThursdaySchedule", b1 =>
+                        {
+                            b1.Property<int>("WebsiteConfigId")
+                                .HasColumnType("int");
+
+                            b1.Property<TimeOnly?>("CloseTime")
+                                .HasColumnType("time")
+                                .HasColumnName("ThursdayCloseTime");
+
+                            b1.Property<TimeOnly?>("OpenTime")
+                                .HasColumnType("time")
+                                .HasColumnName("ThursdayOpenTime");
+
+                            b1.HasKey("WebsiteConfigId");
+
+                            b1.ToTable("WebsiteConfigs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WebsiteConfigId");
+                        });
+
+                    b.OwnsOne("Model.DomainModel.DaySchedule", "TuesdaySchedule", b1 =>
+                        {
+                            b1.Property<int>("WebsiteConfigId")
+                                .HasColumnType("int");
+
+                            b1.Property<TimeOnly?>("CloseTime")
+                                .HasColumnType("time")
+                                .HasColumnName("TuesdayCloseTime");
+
+                            b1.Property<TimeOnly?>("OpenTime")
+                                .HasColumnType("time")
+                                .HasColumnName("TuesdayOpenTime");
+
+                            b1.HasKey("WebsiteConfigId");
+
+                            b1.ToTable("WebsiteConfigs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WebsiteConfigId");
+                        });
+
+                    b.OwnsOne("Model.DomainModel.DaySchedule", "WednesdaySchedule", b1 =>
+                        {
+                            b1.Property<int>("WebsiteConfigId")
+                                .HasColumnType("int");
+
+                            b1.Property<TimeOnly?>("CloseTime")
+                                .HasColumnType("time")
+                                .HasColumnName("WednesdayCloseTime");
+
+                            b1.Property<TimeOnly?>("OpenTime")
+                                .HasColumnType("time")
+                                .HasColumnName("WednesdayOpenTime");
+
+                            b1.HasKey("WebsiteConfigId");
+
+                            b1.ToTable("WebsiteConfigs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WebsiteConfigId");
+                        });
+
+                    b.Navigation("FridaySchedule");
+
+                    b.Navigation("MondaySchedule");
+
+                    b.Navigation("SaturdaySchedule");
+
+                    b.Navigation("SundaySchedule");
+
+                    b.Navigation("ThursdaySchedule");
+
+                    b.Navigation("TuesdaySchedule");
+
+                    b.Navigation("WednesdaySchedule");
                 });
 
             modelBuilder.Entity("Model.DomainModel.WorkTask", b =>

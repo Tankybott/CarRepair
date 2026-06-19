@@ -23,6 +23,7 @@ namespace DataAccess
         public DbSet<WorkTask> Tasks { get; set; }
         public DbSet<Part> Parts { get; set; }
         public DbSet<CostEstimationItem> CostEstimationItems { get; set; }
+        public DbSet<WebsiteConfig> WebsiteConfigs { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -159,6 +160,43 @@ namespace DataAccess
             // Car constraints
             builder.Entity<Car>()
                 .HasCheckConstraint("CK_Car_Year_Range", "[Year] >= 1886 AND [Year] <= 2100");
+
+            // WebsiteConfig — single-row table with owned day schedules
+            builder.Entity<WebsiteConfig>().OwnsOne(w => w.MondaySchedule, nav =>
+            {
+                nav.Property(d => d.OpenTime).HasColumnName("MondayOpenTime");
+                nav.Property(d => d.CloseTime).HasColumnName("MondayCloseTime");
+            });
+            builder.Entity<WebsiteConfig>().OwnsOne(w => w.TuesdaySchedule, nav =>
+            {
+                nav.Property(d => d.OpenTime).HasColumnName("TuesdayOpenTime");
+                nav.Property(d => d.CloseTime).HasColumnName("TuesdayCloseTime");
+            });
+            builder.Entity<WebsiteConfig>().OwnsOne(w => w.WednesdaySchedule, nav =>
+            {
+                nav.Property(d => d.OpenTime).HasColumnName("WednesdayOpenTime");
+                nav.Property(d => d.CloseTime).HasColumnName("WednesdayCloseTime");
+            });
+            builder.Entity<WebsiteConfig>().OwnsOne(w => w.ThursdaySchedule, nav =>
+            {
+                nav.Property(d => d.OpenTime).HasColumnName("ThursdayOpenTime");
+                nav.Property(d => d.CloseTime).HasColumnName("ThursdayCloseTime");
+            });
+            builder.Entity<WebsiteConfig>().OwnsOne(w => w.FridaySchedule, nav =>
+            {
+                nav.Property(d => d.OpenTime).HasColumnName("FridayOpenTime");
+                nav.Property(d => d.CloseTime).HasColumnName("FridayCloseTime");
+            });
+            builder.Entity<WebsiteConfig>().OwnsOne(w => w.SaturdaySchedule, nav =>
+            {
+                nav.Property(d => d.OpenTime).HasColumnName("SaturdayOpenTime");
+                nav.Property(d => d.CloseTime).HasColumnName("SaturdayCloseTime");
+            });
+            builder.Entity<WebsiteConfig>().OwnsOne(w => w.SundaySchedule, nav =>
+            {
+                nav.Property(d => d.OpenTime).HasColumnName("SundayOpenTime");
+                nav.Property(d => d.CloseTime).HasColumnName("SundayCloseTime");
+            });
         }
     }
 }

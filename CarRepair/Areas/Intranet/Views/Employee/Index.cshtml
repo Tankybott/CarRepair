@@ -163,6 +163,29 @@
     </div>
 </div>
 
+<div class="modal fade" id="availabilityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-week me-2"></i>Availability — <span id="availEmpName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex gap-2 mb-3">
+                    <input type="date" class="form-control" id="availDate" onchange="loadAvailability()" />
+                    <button type="button" class="btn btn-outline-primary" onclick="loadAvailability()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <div id="availResult"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     var isAdmin = @(User.IsInRole("Admin") ? "true" : "false");
 
@@ -274,8 +297,56 @@
         new bootstrap.Modal(document.getElementById("employeeInfoModal")).show();
     }
 
+    let currentAvailEmployeeId = null;
+
     function showAvailability(id) {
-        // TODO: navigate to availability view
+        const row = table.getRow(id).getData();
+        currentAvailEmployeeId = id;
+        document.getElementById('availEmpName').textContent = row.fullName;
+        document.getElementById('availDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('availResult').innerHTML = '';
+        new bootstrap.Modal(document.getElementById('availabilityModal')).show();
+        loadAvailability();
+    }
+
+    function loadAvailability() {
+        const date = document.getElementById('availDate').value;
+        if (!date || !currentAvailEmployeeId) return;
+
+        document.getElementById('availResult').innerHTML = '<div class="text-center text-muted small py-2">Loading…</div>';
+
+        fetch(`/api/employee/${currentAvailEmployeeId}/bookings?date=${date}`)
+            .then(r => r.json())
+            .then(({ schedule, bookings }) => {
+                let html = '';
+                if (!schedule) {
+                    html = '<div class="alert alert-secondary py-2 mb-0"><i class="bi bi-shop me-1"></i>Workshop is closed on this day.</div>';
+                } else {
+                    html += `<p class="text-muted small mb-3">Workshop hours: <strong>${schedule.openTime} – ${schedule.closeTime}</strong></p>`;
+                    if (bookings.length === 0) {
+                        html += `<div class="alert alert-success py-2 mb-0"><i class="bi bi-check-circle me-1"></i>Available all day (${schedule.openTime} – ${schedule.closeTime})</div>`;
+                    } else {
+                        html += '<div class="list-group">';
+                        bookings.forEach(b => {
+                            const colour = b.type === 'Task' ? 'list-group-item-warning'
+                                : b.type === 'Vacation' ? 'list-group-item-info'
+                                : 'list-group-item-secondary';
+                            html += `<div class="list-group-item ${colour} py-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <span class="fw-semibold">${b.start} – ${b.end}</span>
+                                    <span class="badge bg-secondary ms-2">${b.type}</span>
+                                </div>
+                                ${b.label ? `<div class="small text-muted mt-1">${b.label}</div>` : ''}
+                            </div>`;
+                        });
+                        html += '</div>';
+                    }
+                }
+                document.getElementById('availResult').innerHTML = html;
+            })
+            .catch(() => {
+                document.getElementById('availResult').innerHTML = '<div class="alert alert-danger py-2 mb-0">Failed to load availability.</div>';
+            });
     }
 
     function deleteRow(id, row) {

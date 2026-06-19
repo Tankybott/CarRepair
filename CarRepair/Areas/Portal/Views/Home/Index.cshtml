@@ -1,4 +1,6 @@
-﻿@{
+@model Model.DTOs.IntranetDto.WebsiteConfigDto
+
+@{
     ViewData["Title"] = "Welcome";
 }
 
@@ -11,12 +13,11 @@
 
         <div class="col-md-5 order-0 order-md-1">
             <h1 class="display-5 fw-bold mb-3">
-                Fast & Transparent Car Repair Estimates
+                @Model.PortalHomeTitle
             </h1>
 
             <p class="lead mb-4">
-                Enter your car details, describe the issue, upload photos, and receive a mechanic‑verified
-                cost estimate before booking your appointment.
+                @Model.PortalHomeText
             </p>
 
             <a href="/Offer" class="btn btn-warning btn-lg w-100 w-md-auto">

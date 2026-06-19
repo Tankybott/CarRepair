@@ -15,6 +15,8 @@ using Service.ServiceTypeRelated;
 using Service.ServiceTypeRelated.Interface;
 using Service.UserRelated;
 using Service.UserRelated.Interface;
+using Service.WebsiteConfigRelated;
+using Service.WebsiteConfigRelated.Interface;
 
 namespace CarRepair.DI
 {
@@ -93,6 +95,12 @@ namespace CarRepair.DI
             services.AddScoped<ICarUpdater, CarUpdater>();
             services.AddScoped<ICarDeleter, CarDeleter>();
             services.AddScoped<ICarReader, CarReadService>();
+
+            // website config
+            services.AddScoped<IWebsiteConfigRepository, WebsiteConfigRepository>();
+            services.AddScoped<IWebsiteConfigReader, WebsiteConfigReader>();
+            services.AddScoped<IWebsiteConfigUpdater, WebsiteConfigUpdater>();
+            services.AddScoped<IWorkingHoursValidator, WorkingHoursValidator>();
 
             return services;
         }

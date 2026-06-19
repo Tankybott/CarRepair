@@ -2,6 +2,7 @@ using AutoMapper;
 using DataAccess.Repository.Interfaces;
 using Model.DomainModel;
 using Model.DTOs.IntranetDto;
+using Service.WebsiteConfigRelated.Interface;
 using Service.WorkTaskRelated.Interface;
 
 namespace Service.WorkTaskRelated
@@ -11,22 +12,26 @@ namespace Service.WorkTaskRelated
         private readonly IWorkTaskRepository _workTaskRepository;
         private readonly IEmployeeProfileRepository _employeeProfileRepository;
         private readonly IEmployeeBookingRepository _employeeBookingRepository;
+        private readonly IWorkingHoursValidator _workingHoursValidator;
         private readonly IMapper _mapper;
 
         public WorkTaskCreator(
             IWorkTaskRepository workTaskRepository,
             IEmployeeProfileRepository employeeProfileRepository,
             IEmployeeBookingRepository employeeBookingRepository,
+            IWorkingHoursValidator workingHoursValidator,
             IMapper mapper)
         {
             _workTaskRepository = workTaskRepository;
             _employeeProfileRepository = employeeProfileRepository;
             _employeeBookingRepository = employeeBookingRepository;
+            _workingHoursValidator = workingHoursValidator;
             _mapper = mapper;
         }
 
         public async Task<IntranetWorkTaskReadDto> CreateAsync(IntranetWorkTaskCreateDto dto)
         {
+            await _workingHoursValidator.ValidateAsync(dto.PredictedStart, dto.PredictedEnd);
             var task = new WorkTask
             {
                 RepairId = dto.RepairId,

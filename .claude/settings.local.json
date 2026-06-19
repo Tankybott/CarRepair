@@ -2,18 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\" -Recurse -Directory)",
-      "Bash(Select-Object -ExpandProperty FullName)",
-      "PowerShell(head *)",
-      "Bash(dotnet build *)",
-      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\BasketRelated\\\\Interface\\\\IBasketService.cs\" -Force)",
-      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\BasketRelated\\\\BasketService.cs\" -Force)",
-      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\BasketRelated\\\\Interface\" -Force)",
-      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\BasketRelated\" -Force)",
-      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\CarRelated\\\\Interface\\\\IPortalCarReader.cs\" -Force)",
-      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\CarRelated\\\\PortalCarReaderService.cs\" -Force)",
-      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\CarRelated\\\\Interface\\\\IPortalCarWriter.cs\" -Force)",
-      "Bash(Remove-Item \"C:\\\\Users\\\\mbuko\\\\OneDrive\\\\Desktop\\\\Studia\\\\semestr 5\\\\wpf\\\\CarRepair\\\\Service\\\\CarRelated\\\\PortalCarWriterService.cs\" -Force)",
-      "Bash(Write-Output \"Done\")"
+      "Bash(Select-Object FullName)",
+      "PowerShell(dotnet build *)"
     ]
   }
 }

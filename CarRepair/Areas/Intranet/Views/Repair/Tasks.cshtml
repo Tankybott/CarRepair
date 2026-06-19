@@ -75,16 +75,18 @@
                     </select>
                 </div>
 
-                <div class="row g-3 mb-3">
+                <div class="row g-3 mb-1">
                     <div class="col-md-6">
                         <label class="form-label">Predicted Start <span class="text-danger">*</span></label>
-                        <input type="datetime-local" class="form-control" id="taskStart" oninput="clearEmployees()" />
+                        <input type="datetime-local" class="form-control" id="taskStart" oninput="clearEmployees(); validateWorkingHours()" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Predicted End <span class="text-danger">*</span></label>
-                        <input type="datetime-local" class="form-control" id="taskEnd" oninput="clearEmployees()" />
+                        <input type="datetime-local" class="form-control" id="taskEnd" oninput="clearEmployees(); validateWorkingHours()" />
                     </div>
                 </div>
+                <div id="workingHoursInfo" class="text-muted small mb-2 px-1"></div>
+                <div id="workingHoursError" class="alert alert-warning py-1 px-2 small mb-2" style="display:none;"></div>
 
                 <div class="mb-3">
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="checkAvailability()">
@@ -113,6 +115,8 @@
 <script>
     const repairId = @Model.RepairId;
     let selectedServiceTypeId = null;
+    const workingHours = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.WorkingHours, jsonOptions));
+    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
     const tableData = @Html.Raw(JsonSerializer.Serialize(Model.Tasks, jsonOptions));
 
@@ -195,6 +199,72 @@
         document.getElementById('employeesSection').style.display = 'none';
     }
 
+    function getWorkingHoursError(startVal, endVal) {
+        const start = new Date(startVal);
+        const end = new Date(endVal);
+
+        const startSched = workingHours[start.getDay()];
+        if (!startSched)
+            return `Workshop is closed on ${dayNames[start.getDay()]}s.`;
+
+        const startTime = String(start.getHours()).padStart(2,'0') + ':' + String(start.getMinutes()).padStart(2,'0');
+        if (startTime < startSched.openTime)
+            return `Start (${startTime}) is before workshop opening (${startSched.openTime}) on ${dayNames[start.getDay()]}.`;
+
+        const endSched = workingHours[end.getDay()];
+        if (!endSched)
+            return `Workshop is closed on ${dayNames[end.getDay()]}s.`;
+
+        const endTime = String(end.getHours()).padStart(2,'0') + ':' + String(end.getMinutes()).padStart(2,'0');
+        if (endTime > endSched.closeTime)
+            return `End (${endTime}) is after workshop closing (${endSched.closeTime}) on ${dayNames[end.getDay()]}.`;
+
+        // check intermediate days
+        const cursor = new Date(start);
+        cursor.setHours(0, 0, 0, 0);
+        cursor.setDate(cursor.getDate() + 1);
+        const endDate = new Date(end);
+        endDate.setHours(0, 0, 0, 0);
+        while (cursor < endDate) {
+            if (!workingHours[cursor.getDay()])
+                return `Task spans ${cursor.toLocaleDateString()} (${dayNames[cursor.getDay()]}), but the workshop is closed that day.`;
+            cursor.setDate(cursor.getDate() + 1);
+        }
+
+        return null;
+    }
+
+    function validateWorkingHours() {
+        const startVal = document.getElementById('taskStart').value;
+        const endVal = document.getElementById('taskEnd').value;
+        const infoDiv = document.getElementById('workingHoursInfo');
+        const errorDiv = document.getElementById('workingHoursError');
+
+        if (startVal) {
+            const d = new Date(startVal);
+            const sched = workingHours[d.getDay()];
+            infoDiv.innerHTML = sched
+                ? `Workshop hours on ${dayNames[d.getDay()]}: ${sched.openTime} – ${sched.closeTime}`
+                : `<span class="text-danger">Workshop is closed on ${dayNames[d.getDay()]}s.</span>`;
+        } else {
+            infoDiv.innerHTML = '';
+        }
+
+        if (!startVal || !endVal) {
+            errorDiv.style.display = 'none';
+            return true;
+        }
+
+        const error = getWorkingHoursError(startVal, endVal);
+        if (error) {
+            errorDiv.textContent = error;
+            errorDiv.style.display = '';
+            return false;
+        }
+        errorDiv.style.display = 'none';
+        return true;
+    }
+
     function checkAvailability() {
         const start = document.getElementById('taskStart').value;
         const end = document.getElementById('taskEnd').value;
@@ -209,6 +279,10 @@
         }
         if (start >= end) {
             toastr.warning('End must be after start.');
+            return;
+        }
+        if (!validateWorkingHours()) {
+            toastr.warning('Task times must be within workshop working hours.');
             return;
         }
 
@@ -241,6 +315,8 @@
         document.getElementById('taskDescription').value = '';
         selectedServiceTypeId = null;
         clearEmployees();
+        document.getElementById('workingHoursInfo').innerHTML = '';
+        document.getElementById('workingHoursError').style.display = 'none';
 
         const select = document.getElementById('taskServiceId');
         select.removeAttribute('disabled');
@@ -265,6 +341,7 @@
         selectedServiceTypeId = selected?.dataset.serviceTypeId || null;
 
         clearEmployees();
+        validateWorkingHours();
         new bootstrap.Modal(document.getElementById('taskModal')).show();
     }
 
@@ -283,6 +360,14 @@
 
         if (!description || !start || !end) {
             toastr.error('Description, start and end are required.');
+            return;
+        }
+        if (start >= end) {
+            toastr.error('End must be after start.');
+            return;
+        }
+        if (!validateWorkingHours()) {
+            toastr.error('Task times must be within workshop working hours.');
             return;
         }
 

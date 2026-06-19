@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Offer";
     var added = TempData["Added"] as string;
+    int catIdx = 0;
 }
 
 @if (added is not null)
@@ -24,7 +25,10 @@
 
     @foreach (var category in Model.Categories)
     {
-        <div class="mb-5">
+        string sectionBg = catIdx % 2 == 0 ? "#FAF9F6" : "#F9F6EE";
+        catIdx++;
+
+        <div class="mb-4 rounded-4 px-4 pt-4 pb-3" style="background: @sectionBg;">
             <h2 class="fw-bold mb-1">@category.Name</h2>
             <p class="text-muted mb-3">@category.Description</p>
 
@@ -37,8 +41,8 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.Id" />
                             <button type="submit"
-                                    class="card h-100 border-0 shadow-sm rounded-4 p-4 bg-body-secondary w-100 text-start"
-                                    style="cursor: pointer; transition: transform .15s ease, box-shadow .15s ease;"
+                                    class="card h-100 border-0 shadow-sm rounded-4 p-4 w-100 text-start"
+                                    style="background: #ffffff; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease;"
                                     onmouseover="this.style.transform='translateY(-3px)'; this.classList.add('shadow');"
                                     onmouseout="this.style.transform='translateY(0)'; this.classList.remove('shadow');">
 

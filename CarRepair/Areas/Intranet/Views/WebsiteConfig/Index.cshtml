@@ -1,0 +1,124 @@
+@model Model.DTOs.IntranetDto.WebsiteConfigDto
+
+@{
+    ViewData["Title"] = "Website Configuration";
+}
+
+<style>
+    .loading { cursor: wait !important; }
+</style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<div class="container mt-2">
+
+    <form id="configForm">
+
+        <div class="card mb-4">
+            <div class="card-header fw-semibold">Portal Home Page</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input class="form-control" id="portalHomeTitle" value="@Model.PortalHomeTitle" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Text</label>
+                    <textarea class="form-control" id="portalHomeText" rows="4" required>@Model.PortalHomeText</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header fw-semibold">Opening Hours</div>
+            <div class="card-body">
+                @{
+                    var days = new[]
+                    {
+                        ("Monday",    Model.MondaySchedule),
+                        ("Tuesday",   Model.TuesdaySchedule),
+                        ("Wednesday", Model.WednesdaySchedule),
+                        ("Thursday",  Model.ThursdaySchedule),
+                        ("Friday",    Model.FridaySchedule),
+                        ("Saturday",  Model.SaturdaySchedule),
+                        ("Sunday",    Model.SundaySchedule),
+                    };
+                }
+                @foreach (var (day, schedule) in days)
+                {
+                    <div class="row align-items-end mb-3 day-row">
+                        <div class="col-12 col-md-2 mb-1 mb-md-0">
+                            <span class="fw-semibold">@day</span>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1">Open</label>
+                            <input type="time" class="form-control open-time" data-day="@day.ToLower()" value="@(schedule?.OpenTime)" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1">Close</label>
+                            <input type="time" class="form-control close-time" data-day="@day.ToLower()" value="@(schedule?.CloseTime)" />
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-floppy me-1"></i> Save Configuration
+        </button>
+
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById("configForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const rows = document.querySelectorAll(".day-row");
+        for (const row of rows) {
+            const open = row.querySelector(".open-time").value;
+            const close = row.querySelector(".close-time").value;
+            const day = row.querySelector(".open-time").dataset.day;
+            const label = day.charAt(0).toUpperCase() + day.slice(1);
+
+            if ((open && !close) || (!open && close)) {
+                toastr.error(`${label}: set both open and close times, or leave both empty.`);
+                return;
+            }
+        }
+
+        const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+        const schedules = {};
+
+        for (const day of days) {
+            const open = document.querySelector(`[data-day="${day}"].open-time`).value;
+            const close = document.querySelector(`[data-day="${day}"].close-time`).value;
+            schedules[day + "Schedule"] = (open && close) ? { openTime: open, closeTime: close } : null;
+        }
+
+        const dto = {
+            portalHomeTitle: document.getElementById("portalHomeTitle").value,
+            portalHomeText: document.getElementById("portalHomeText").value,
+            ...schedules
+        };
+
+        document.body.classList.add("loading");
+
+        fetch("/api/websiteconfig/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dto)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                toastr.success(res.message);
+            } else {
+                toastr.error(res.error || "An error occurred.");
+            }
+        })
+        .catch(() => toastr.error("An error occurred."))
+        .finally(() => document.body.classList.remove("loading"));
+    });
+</script>
+}
