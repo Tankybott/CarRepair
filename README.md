@@ -13,10 +13,8 @@ A full-stack car repair shop management system built with ASP.NET Core 8 MVC. Th
 | Database | SQL Server + Entity Framework Core 8 |
 | Identity & Auth | ASP.NET Core Identity (role-based: Admin, Manager, Employee, Customer) |
 | Mapping | AutoMapper |
-| Testing | xUnit + Moq (245 unit tests) |
 | Architecture | Repository pattern, Service layer, Dependency Injection |
 | Frontend | Razor Views, Vanilla JS (fetch API / AJAX) |
-| Session | ASP.NET Core Session (cart) |
 
 ---
 
@@ -27,8 +25,7 @@ CarRepair/
 ├── CarRepair/               # MVC web host (Areas: Portal, Intranet)
 ├── Model/                   # Domain models, DTOs, ViewModels
 ├── DataAccess/              # EF Core DbContext, Migrations, Repositories
-├── Service/                 # Business logic services
-└── CarRepairTest/           # xUnit unit tests (245 tests)
+└── Service/                 # Business logic services
 ```
 
 The project follows a clean layered architecture:
@@ -161,64 +158,3 @@ Admins and managers can edit the portal home page content and set the shop's wee
 - **Services** — CRUD; portal offer listing is driven by these
 - **Parts** — CRUD with status tracking: `Ordered → Delivered → Installed`
 
----
-
-## Unit Tests
-
-The `CarRepairTest` project contains **245 unit tests** covering all service classes across every domain area:
-
-| Area | Files | Tests |
-|---|---|---|
-| Car | 4 | 17 |
-| Part | 5 | 22 |
-| Repair | 9 | 60 |
-| Service Type | 2 | 9 |
-| Service | 4 | 19 |
-| Work Task | 3 | 29 |
-| Website Config | 3 | 28 |
-| User (Client + Employee) | 9 | 57 |
-| Placeholder | 1 | 1 |
-| **Total** | **40** | **245** |
-
-Tests follow a strict convention:
-- **Naming**: `MethodName_ShouldDoSomething_WhenCondition`
-- **One assertion per test** (two only when one is meaningless without the other)
-- All dependencies mocked with Moq; `UserManager<T>` mocked via its `IUserStore<T>` constructor
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- .NET 8 SDK
-- SQL Server (local or remote)
-
-### Setup
-
-1. Clone the repository
-2. Update the connection string in `CarRepair/appsettings.json`:
-   ```json
-   "ConnectionStrings": {
-     "DefaultConnection": "Server=.;Database=CarRepairDb;Trusted_Connection=True;"
-   }
-   ```
-3. Apply migrations:
-   ```bash
-   dotnet ef database update --project DataAccess --startup-project CarRepair
-   ```
-4. Run the application:
-   ```bash
-   dotnet run --project CarRepair
-   ```
-
-On first startup the app automatically seeds:
-- Default roles (`Admin`, `Manager`, `Employee`, `Customer`)
-- An admin account
-- A default website configuration record
-
-### Running Tests
-
-```bash
-dotnet test CarRepairTest
-```
